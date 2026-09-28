@@ -112,7 +112,7 @@ export function CodeTab({ p }: { p: Project }) {
             </>
           ) : (
             <Button size="sm" variant="dark" loading={gh.busy === 'push'} onClick={gh.push} icon={<Upload className="h-3.5 w-3.5" />}>
-              {gh.canPush ? 'Push to GitHub' : 'Connect GitHub to push'}
+              {gh.canPush ? 'Export to my GitHub' : 'Connect GitHub to export'}
             </Button>
           )
         ) : (

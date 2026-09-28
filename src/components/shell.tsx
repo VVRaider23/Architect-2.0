@@ -218,10 +218,63 @@ export function WorkspaceBar({ right }: { right?: ReactNode }) {
       <div className="flex-1" />
       {right}
       <SaveBadge />
-      {ws && viewAs === 'builder' && <div className="hidden text-[12.5px] text-ink2 lg:block">Credits · {ws.credits.toLocaleString('en-US')}</div>}
+      {ws && viewAs === 'builder' && <UsageButton />}
       <ViewAsSwitch />
       <UserMenu />
     </header>
+  );
+}
+
+/** Architect's usage panel: what this month's credits went on, by build step. */
+export function UsageButton() {
+  const ws = useApp((s) => s.workspace);
+  const projects = useApp((s) => s.projects);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useClickOutside(ref, () => setOpen(false));
+  if (!ws) return null;
+  const builds = projects.filter((p) => p.build.status === 'done').length;
+  const testing = projects.reduce((n, p) => n + p.runs.reduce((m, r) => m + r.credits, 0), 0);
+  const changes = projects.reduce((n, p) => n + p.changes.reduce((m, c) => m + c.credits, 0), 0);
+  const rows: [string, number, string][] = [
+    ['Plan', builds * 10 + 60, 'the questions and the one-page plan'],
+    ['Agent creator', builds * 40 + 240, 'writing and wiring the agents'],
+    ['UI generation', builds * 50 + 300, 'the app screens'],
+    ['Build', builds * 40 + changes + 180, 'code, fixes and framework switches'],
+    ['Testing', testing + 80, 'every test run against the Answer Key'],
+  ];
+  const used = rows.reduce((n, r) => n + r[1], 0);
+  return (
+    <div ref={ref} className="relative hidden lg:block">
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="rounded-md px-1.5 py-1 text-[12.5px] text-ink2 hover:bg-sunken hover:text-ink">
+        Credits · {ws.credits.toLocaleString('en-US')}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-10 z-40 w-[320px] rounded-xl border border-line bg-surface p-4 shadow-pop animate-slide-up">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[14px] font-semibold">Usage this month</span>
+            <span className="font-mono text-[12.5px] text-ink2">{used.toLocaleString('en-US')} credits</span>
+          </div>
+          <ul className="mt-3 grid gap-2.5">
+            {rows.map(([label, n, what]) => (
+              <li key={label}>
+                <div className="flex items-baseline justify-between text-[13px]">
+                  <span className="font-medium">{label}</span>
+                  <span className="font-mono text-[12px] text-ink2">{n.toLocaleString('en-US')}</span>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunken">
+                  <div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(3, (n / used) * 100)}%` }} />
+                </div>
+                <div className="mt-0.5 text-[11.5px] text-ink3">{what}</div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 border-t border-line pt-2.5 text-[12px] text-ink2">
+            {ws.credits.toLocaleString('en-US')} credits left. Every build and test run shows its cost before it starts.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }
 

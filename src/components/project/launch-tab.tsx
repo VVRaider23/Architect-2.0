@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowRight, CheckCircle2, Clock, Cloud, ExternalLink, Globe, KeyRound, Lock, RotateCcw, ShieldCheck, Undo2, Users, XCircle, Zap } from 'lucide-react';
-import { useApp } from '@/lib/store';
+import { ArrowRight, CheckCircle2, Clock, Cloud, ExternalLink, Globe, KeyRound, Lock, RotateCcw, ShieldCheck, Trash2, Undo2, Users, XCircle, Zap } from 'lucide-react';
+import { DEFAULT_ENV_VARS, useApp } from '@/lib/store';
 import { useNow } from '@/lib/hooks';
 import { useUI } from '@/lib/ui';
 import { APPROVED, ENV_LABEL, STATUS_LABEL, approvedFor, pendingRequest, rulesFor, type PathStep } from '@/lib/stage';
 import type { LaunchRequest, Project } from '@/lib/types';
 import { EnvPill } from '@/components/domain';
-import { Button, Card, Chip, Empty } from '@/components/ui';
+import { Button, Card, Chip, Empty, Modal, inputCls } from '@/components/ui';
 import { cn, dateLabel, timeAgo } from '@/lib/utils';
 import { StepHeader } from './journey';
 
@@ -235,13 +235,7 @@ export function ShipTab({ p, state }: { p: Project; state?: PathStep['state'] })
             </span>
           </li>
           <CustomDomainRow p={p} canEdit={isBuilder} />
-          <li className="flex gap-2.5">
-            <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-ink2" />
-            <span>
-              Secret keys: <b>4 set</b>
-              <span className="block text-[12px] text-ink2">stored encrypted, never shown in code</span>
-            </span>
-          </li>
+          <EnvVarsRow p={p} canEdit={isBuilder} />
           <li className="flex gap-2.5">
             <Users className="mt-0.5 h-4 w-4 shrink-0 text-ink2" />
             <span>
@@ -271,6 +265,75 @@ export function ShipTab({ p, state }: { p: Project; state?: PathStep['state'] })
         </ul>
       </Card>
     </div>
+  );
+}
+
+/** Architect's environment variables: names are listed, values are write-only. */
+function EnvVarsRow({ p, canEdit }: { p: Project; canEdit: boolean }) {
+  const setEnvVar = useApp((s) => s.setEnvVar);
+  const removeEnvVar = useApp((s) => s.removeEnvVar);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [value, setValue] = useState('');
+  const vars = p.envVars ?? DEFAULT_ENV_VARS.map((n) => ({ name: n, at: p.createdAt }));
+  const key = name.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+  return (
+    <li className="flex gap-2.5">
+      <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-ink2" />
+      <span>
+        Environment variables: <b>{vars.length} set</b>
+        <span className="block text-[12px] text-ink2">API keys and passwords, stored encrypted, never shown in code</span>
+        <button onClick={() => setOpen(true)} className="block text-[12.5px] font-medium text-accent hover:underline">
+          {canEdit ? 'Manage' : 'See names'}
+        </button>
+      </span>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Environment variables"
+        description="The keys and passwords the app needs at run time. Each value is encrypted when saved and never shown again, not even to you."
+        width={560}
+        footer={
+          <Button variant="primary" onClick={() => setOpen(false)}>
+            Done
+          </Button>
+        }
+      >
+        <ul className="divide-y divide-line rounded-xl border border-line">
+          {vars.map((v) => (
+            <li key={v.name} className="flex items-center gap-3 px-3.5 py-2.5 text-[13px]">
+              <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{v.name}</span>
+              <span className="font-mono text-[12px] text-ink3">••••••••</span>
+              {canEdit && (
+                <button aria-label={`Remove ${v.name}`} onClick={() => removeEnvVar(p.id, v.name)} className="rounded-md p-1 text-ink3 hover:bg-sunken hover:text-ink">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </li>
+          ))}
+          {!vars.length && <li className="px-3.5 py-3 text-[13px] text-ink2">None yet.</li>}
+        </ul>
+        {canEdit && (
+          <form
+            className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!key || !value) return;
+              setEnvVar(p.id, key);
+              setName('');
+              setValue('');
+            }}
+          >
+            <input className={inputCls} placeholder="NAME" value={name} onChange={(e) => setName(e.target.value)} aria-label="Variable name" />
+            <input className={inputCls} type="password" placeholder="Value" value={value} onChange={(e) => setValue(e.target.value)} aria-label="Variable value" autoComplete="off" />
+            <Button type="submit" disabled={!key || !value}>
+              Add
+            </Button>
+          </form>
+        )}
+        <p className="mt-2.5 text-[12px] text-ink3">In this prototype only the names are kept; values are thrown away.</p>
+      </Modal>
+    </li>
   );
 }
 

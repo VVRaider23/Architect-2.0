@@ -134,7 +134,7 @@ export function ChatPanel({ p }: { p: Project }) {
             <ArrowUp className="h-4 w-4" />
           </button>
         </div>
-        <div className="mt-1.5 px-1 text-[11.5px] text-ink3">Enter to send · try “Why is it failing?” or “/invite”</div>
+        <div className="mt-1.5 px-1 text-[11.5px] text-ink3">Tests rerun after every change · Enter to send · try “Why is it failing?”</div>
       </form>
     </aside>
   );

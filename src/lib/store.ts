@@ -72,6 +72,9 @@ export const IMPORT_STEPS = [
   'First test run',
   'Open a pull request',
 ];
+/** The environment variables a new claims app starts with. */
+export const DEFAULT_ENV_VARS = ['LYZR_API_KEY', 'GMAIL_OAUTH_TOKEN', 'CLAIMS_DB_URL', 'POLICY_DOCS_BUCKET'];
+
 export const stepsFor = (p: Pick<Project, 'importedFrom'>) => (p.importedFrom ? IMPORT_STEPS : BUILD_STEPS);
 export const STEP_MS = 2600;
 export const FLAG_DELAY_MS = 25_000;
@@ -147,6 +150,8 @@ export interface AppState {
   createProject: (prompt: string, opts?: { oneShot?: boolean; studioAgents?: { id: string; name: string; description: string }[] }) => string;
   setTheme: (pid: string, theme: string) => void;
   setCustomDomain: (pid: string, domain: string) => void;
+  setEnvVar: (pid: string, name: string) => void;
+  removeEnvVar: (pid: string, name: string) => void;
   importProject: (info: ImportInfo, frameworkId: FrameworkId | null) => string;
   quickStartDemo: () => string;
   answerConsultant: (pid: string, answers: Partial<ConsultantAnswers>) => void;
@@ -476,6 +481,22 @@ export const useApp = create<AppState>()(
         setTheme: (pid, theme) =>
           withProject(pid, (p) => {
             p.theme = theme;
+          }),
+
+        setEnvVar: (pid, name) =>
+          withProject(pid, (p, s) => {
+            const key = name.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+            if (!key) return;
+            const list = p.envVars ?? DEFAULT_ENV_VARS.map((n) => ({ name: n, at: p.createdAt }));
+            p.envVars = [...list.filter((v) => v.name !== key), { name: key, at: Date.now() }];
+            pushAudit(s, 'Arjun', 'set environment variable', p.name, key);
+          }),
+
+        removeEnvVar: (pid, name) =>
+          withProject(pid, (p, s) => {
+            const list = p.envVars ?? DEFAULT_ENV_VARS.map((n) => ({ name: n, at: p.createdAt }));
+            p.envVars = list.filter((v) => v.name !== name);
+            pushAudit(s, 'Arjun', 'removed environment variable', p.name, name);
           }),
 
         setCustomDomain: (pid, domain) =>

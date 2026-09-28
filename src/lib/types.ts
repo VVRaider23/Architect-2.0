@@ -310,6 +310,8 @@ export interface Project {
   theme?: string;
   /** A custom web address for the live app. */
   customDomain?: string;
+  /** Names of the app's environment variables. Values are never kept in the browser. */
+  envVars?: { name: string; at: number }[];
 }
 
 export interface ImportInfo {

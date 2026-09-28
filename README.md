@@ -132,6 +132,8 @@ src/app/api/            auth, saved state, GitHub, AI and repo analysis routes
 
 ## Design principles
 
+The full reasoning, including what we rejected, is in [DESIGN.md](DESIGN.md).
+
 - **The journey is the menu.** Builders already have many ways to build; what's missing is proof and sign-off. A project has one menu, Build → Prove → Sign off → Ship → Learn, that shows where the app is. Each step opens with the question it answers, who does it and what unlocks it, and one main button says what to do next.
 - **Show, then explain.** A first-time visitor can take a guided tour that builds a real app with them instead of reading about it. Words are plain: "wrong answers", not "failed evals".
 - **Each person sees only their job.** Meera sees answers, never code. Farah sees evidence, never code.
