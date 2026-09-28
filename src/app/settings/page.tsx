@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Check, Download, Lock, ShieldCheck, Zap } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { PEOPLE } from '@/lib/seed';
-import { supabaseConfigured } from '@/lib/supabase';
+import { githubUrl, useServer } from '@/lib/account';
 import type { LaunchRules } from '@/lib/types';
 import { RequireAuth, WorkspaceBar, roleLabel } from '@/components/shell';
 import { Avatar, Button, Card, Chip, Toggle } from '@/components/ui';
@@ -264,18 +264,49 @@ function Members() {
 
 function Connections() {
   const ws = useApp((s) => s.workspace!);
+  const authMode = useApp((s) => s.authMode);
   const slack = useApp((s) => s.projects.some((p) => p.slackAlerts));
-  const rows: { name: string; status: string; on: boolean; detail: string }[] = [
-    { name: 'GitHub', status: `Connected as ${ws.github}`, on: true, detail: 'Imports, commits and pull requests. Your code stays in your repos.' },
-    { name: 'Gmail', status: 'Connected', on: true, detail: 'Read the claims inbox, create drafts. Never sends.' },
-    { name: 'Claims database', status: 'Connected, read only', on: true, detail: 'Postgres, through a read-only user.' },
-    { name: 'Slack', status: slack ? 'Connected' : 'Not connected', on: slack, detail: 'Alerts for high-risk claims. Added when a project asks for it.' },
+  const { features, user } = useServer();
+  const gh = user?.github;
+  const rows: { name: string; status: string; on: boolean; detail: string; real?: boolean; action?: React.ReactNode }[] = [
     {
       name: 'Sign-in and database',
-      status: supabaseConfigured ? 'Supabase connected' : 'Demo mode (this browser)',
-      on: supabaseConfigured,
-      detail: supabaseConfigured ? 'Real accounts; your workspace is saved to your account.' : 'Add Supabase keys in Vercel to turn on real sign-in and saving.',
+      status: features.accounts ? (authMode === 'account' ? 'Your account' : 'Available') : 'Demo mode (this browser)',
+      on: features.accounts && authMode === 'account',
+      real: features.accounts,
+      detail: features.accounts
+        ? authMode === 'account'
+          ? 'Real account. Your workspace and projects are saved in Postgres.'
+          : 'Create an account (sign out, then Create account) to save your work in the database.'
+        : 'Add a database in Vercel (Storage → Neon) to turn on real accounts.',
     },
+    {
+      name: 'GitHub',
+      status: gh ? `Connected as @${gh.login}` : features.github ? 'Not connected' : `Demo: ${ws.github}`,
+      on: !!gh || !features.github,
+      real: features.github,
+      detail: gh
+        ? gh.canPush
+          ? 'Real connection. Architect can read your repos, create repos and open pull requests.'
+          : 'Real connection for reading repos. Connect again to allow pushing code.'
+        : 'Imports, commits and pull requests. Your code stays in your repos.',
+      action:
+        features.github && (!gh || !gh.canPush) ? (
+          <Button size="sm" variant="dark" href={githubUrl('connect', '/settings#connections')}>
+            {gh ? 'Allow pushing code' : 'Connect GitHub'}
+          </Button>
+        ) : null,
+    },
+    {
+      name: 'AI model',
+      status: features.ai === 'anthropic' ? 'Claude (Anthropic)' : features.ai === 'openai' ? 'OpenAI' : 'Scripted answers',
+      on: !!features.ai,
+      real: !!features.ai,
+      detail: features.ai ? 'Architect answers open questions and runs the agent playground with a real model.' : 'Add an API key in Vercel to turn on real AI answers.',
+    },
+    { name: 'Gmail', status: 'Connected (sample)', on: true, detail: 'Read the claims inbox, create drafts. Never sends.' },
+    { name: 'Claims database', status: 'Connected, read only (sample)', on: true, detail: 'The insurer’s claims data, through a read-only user.' },
+    { name: 'Slack', status: slack ? 'Connected (sample)' : 'Not connected', on: slack, detail: 'Alerts for high-risk claims. Added when a project asks for it.' },
   ];
   return (
     <div className="grid gap-5">
@@ -291,9 +322,13 @@ function Connections() {
                 {r.on ? <Check className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-semibold">{r.name}</div>
+                <div className="flex items-center gap-2 text-[14px] font-semibold">
+                  {r.name}
+                  {r.real && <Chip tone="accent" className="!py-0 text-[10.5px]">live</Chip>}
+                </div>
                 <div className="text-[12.5px] text-ink2">{r.detail}</div>
               </div>
+              {r.action}
               <Chip tone={r.on ? 'ok' : 'neutral'}>{r.status}</Chip>
             </li>
           ))}

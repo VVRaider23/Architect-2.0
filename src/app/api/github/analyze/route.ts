@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { currentUser, decrypt } from '@/server/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,7 +120,10 @@ export async function GET(req: NextRequest) {
     'User-Agent': 'architect-2-prototype',
     'X-GitHub-Api-Version': '2022-11-28',
   };
-  if (process.env.GITHUB_TOKEN) apiHeaders.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  // Prefer the signed-in person's own GitHub token (higher limits), then a site-wide token.
+  const me = await currentUser().catch(() => null);
+  const token = decrypt(me?.github_token ?? null) ?? process.env.GITHUB_TOKEN;
+  if (token) apiHeaders.Authorization = `Bearer ${token}`;
 
   // 1. Repo details and the full file list, from the API when it answers.
   let description: string | null = null;

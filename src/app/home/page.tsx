@@ -6,6 +6,8 @@ import Link from 'next/link';
 import {
   ArrowRight,
   Bell,
+  Bot,
+  Lightbulb,
   CheckCircle2,
   ClipboardCheck,
   FileSearch,
@@ -25,6 +27,8 @@ import { latestRun } from '@/lib/engine';
 import { APPROVED, ENV_LABEL, approvedFor, arrivedFlags, openTasks, pendingRequest, rulesFor, stageLabel } from '@/lib/stage';
 import type { FrameworkId, Project, Workspace } from '@/lib/types';
 import { RequireAuth, WorkspaceBar } from '@/components/shell';
+import { ConsultantModal, PlusMenu, PromptLibraryModal, StudioAgentsModal } from '@/components/home-extras';
+import type { StudioAgent } from '@/lib/catalog';
 import { Button, Card, Chip, Modal, SectionLabel, textareaCls } from '@/components/ui';
 import { cn, greeting, plural, timeAgo } from '@/lib/utils';
 
@@ -84,13 +88,16 @@ function BuilderHome() {
   const [prompt, setPrompt] = useState('');
   const [fw, setFw] = useState<FrameworkId | 'auto'>('auto');
   const [files, setFiles] = useState<string[]>([]);
+  const [mode, setMode] = useState<'guided' | 'oneshot'>('guided');
+  const [studio, setStudio] = useState<StudioAgent[]>([]);
+  const [modal, setModal] = useState<null | 'studio' | 'library' | 'consultant'>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const me = personByRole('builder');
 
   const start = () => {
     const text = prompt.trim() || TEMPLATES[0].prompt;
     const full = files.length ? `${text}\n\nAttached: ${files.join(', ')}` : text;
-    const id = createProject(full);
+    const id = createProject(full, { oneShot: mode === 'oneshot', studioAgents: studio.map(({ id, name, description }) => ({ id, name, description })) });
     if (fw !== 'auto') setFramework(id, fw);
     router.push(`/p/${id}`);
   };
@@ -125,8 +132,16 @@ function BuilderHome() {
             placeholder="Describe your app. For example: a claims triage assistant that reads claim emails and PDFs, checks the policy, flags risky claims for a human, and drafts replies for our claims team."
             className="block w-full resize-none rounded-t-2xl bg-transparent px-5 pt-4 text-[15px] leading-relaxed placeholder:text-ink3 focus:outline-none"
           />
-          {files.length > 0 && (
+          {(files.length > 0 || studio.length > 0) && (
             <div className="flex flex-wrap gap-1.5 px-5 pb-1">
+              {studio.map((a) => (
+                <Chip key={a.id} tone="accent" icon={<Bot className="h-3 w-3" />}>
+                  {a.name}
+                  <button aria-label={`Remove ${a.name}`} onClick={() => setStudio((xs) => xs.filter((x) => x.id !== a.id))} className="ml-0.5 opacity-70 hover:opacity-100">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Chip>
+              ))}
               {files.map((f) => (
                 <Chip key={f} tone="outline" icon={<Paperclip className="h-3 w-3" />}>
                   {f}
@@ -149,9 +164,26 @@ function BuilderHome() {
                 e.target.value = '';
               }}
             />
-            <Button size="sm" variant="ghost" icon={<Paperclip className="h-3.5 w-3.5" />} onClick={() => fileRef.current?.click()}>
-              Attach files
-            </Button>
+            <PlusMenu onAttach={() => fileRef.current?.click()} onStudio={() => setModal('studio')} onLibrary={() => setModal('library')} />
+            <div className="flex h-8 rounded-lg border border-line bg-surface2 p-0.5 text-[12.5px]" role="radiogroup" aria-label="Build mode">
+              {(
+                [
+                  ['guided', 'Guided', 'Questions and a plan first'],
+                  ['oneshot', 'One Shot', 'Build straight away with sensible defaults'],
+                ] as const
+              ).map(([id, label, tip]) => (
+                <button
+                  key={id}
+                  role="radio"
+                  aria-checked={mode === id}
+                  title={tip}
+                  onClick={() => setMode(id)}
+                  className={cn('rounded-md px-2.5 font-medium', mode === id ? 'bg-surface text-ink shadow-card' : 'text-ink2 hover:text-ink')}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <label className="flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface2 px-2 text-[12.5px] text-ink2">
               Framework:
               <select
@@ -173,15 +205,28 @@ function BuilderHome() {
               Import from GitHub
             </Button>
             <Button size="sm" variant="primary" onClick={start} icon={<Sparkles className="h-3.5 w-3.5" />}>
-              Plan it
+              {mode === 'oneshot' ? 'Build it' : 'Plan it'}
             </Button>
           </div>
         </div>
-        <button onClick={demo} className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline">
-          Short on time? Open a finished demo project <ArrowRight className="h-3.5 w-3.5" />
-        </button>
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
+          <button onClick={() => setModal('consultant')} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline">
+            <Lightbulb className="h-3.5 w-3.5" /> Not sure what to build? Ask the AI Consultant
+          </button>
+          <button onClick={demo} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline">
+            Short on time? Open a finished demo project <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <StudioAgentsModal key={modal === 'studio' ? 'open' : 'closed'} open={modal === 'studio'} onClose={() => setModal(null)} selected={studio} onSave={setStudio} />
+        <PromptLibraryModal open={modal === 'library'} onClose={() => setModal(null)} onPick={setPrompt} />
+        <ConsultantModal open={modal === 'consultant'} onClose={() => setModal(null)} onPick={setPrompt} />
 
-        <SectionLabel className="mt-9">Start from a template</SectionLabel>
+        <div className="mt-9 flex items-center justify-between">
+          <SectionLabel>Start from the prompt library</SectionLabel>
+          <button onClick={() => setModal('library')} className="text-[12.5px] font-medium text-accent hover:underline">
+            Browse all
+          </button>
+        </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {TEMPLATES.map((t) => (
             <button

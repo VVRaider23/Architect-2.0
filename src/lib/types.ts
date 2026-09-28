@@ -142,6 +142,8 @@ export interface ChangeReceipt {
   versionFrom: number;
   versionTo: number;
   pr?: number;
+  /** Link to a real pull request, when GitHub is connected. */
+  prUrl?: string;
   committed: boolean;
   undone?: boolean;
   diffFile?: string;
@@ -236,6 +238,8 @@ export interface ChatMsg {
   text: string;
   at: number;
   card?: ChatCard;
+  /** Written by a real AI model (not scripted). */
+  ai?: boolean;
 }
 
 export interface ConsultantAnswers {
@@ -296,6 +300,16 @@ export interface Project {
   accessChanged: boolean;
   /** Set when the project started from an existing GitHub repo. */
   importedFrom?: ImportInfo;
+  /** The real GitHub repository this project's code was pushed to. */
+  github?: { repo: string; url: string; pushedAt: number; commitUrl: string };
+  /** Guided (questions and a plan first) or One Shot (build straight away), as in today's Architect. */
+  mode?: 'guided' | 'oneshot';
+  /** Agents brought in from Lyzr Studio with the "+" menu. */
+  studioAgents?: { id: string; name: string; description: string }[];
+  /** The generated app's theme preset. */
+  theme?: string;
+  /** A custom web address for the live app. */
+  customDomain?: string;
 }
 
 export interface ImportInfo {

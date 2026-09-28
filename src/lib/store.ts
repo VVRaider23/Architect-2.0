@@ -84,6 +84,29 @@ const DEFAULT_RISKY = 'Water damage over $10,000, a policy less than 60 days old
 
 type ChangeKind = 'theft' | 'water' | 'slack' | 'framework';
 
+const EXPLAIN = /(fail|miss|wrong|explain the (result|run|proof))/;
+const QUESTION = /\?\s*$|^(what|why|how|which|who|when|where|can|could|does|do|is|are|should|would|will|tell me|explain)\b/;
+const FRAMEWORK_IDS: FrameworkId[] = ['langgraph', 'crewai', 'openai-agents', 'google-adk', 'lyzr'];
+
+/** What a chat message asks for. "open" means nothing scripted matches, so a real AI can answer it. */
+export function chatIntent(p: Project, raw: string): 'invite' | 'plan' | 'queued' | 'change' | 'explain' | 'run' | 'deploy' | 'signoff' | 'open' {
+  const t = raw.trim().toLowerCase();
+  if (t === '/invite' || /\binvite\b/.test(t)) return 'invite';
+  if (!p.planApproved) return /slack/.test(t) || !QUESTION.test(t) ? 'plan' : 'open';
+  if (p.build.status !== 'done') return QUESTION.test(t) ? 'open' : 'queued';
+  const fw = FRAMEWORK_IDS.find((f) => t.includes(frameworkLabel(f).toLowerCase().replace(' sdk', '')) || t.includes(f));
+  if (/(police|theft|stolen)/.test(t) && !QUESTION.test(t)) return 'change';
+  if (/\bfix\b/.test(t) && p.version < 3) return 'change';
+  if (/(water|photo|9,?[0-9]{3}|5,?000)/.test(t) && !QUESTION.test(t)) return 'change';
+  if (/slack/.test(t) && !QUESTION.test(t)) return 'change';
+  if (fw && /(switch|move|change|use|convert|port)/.test(t) && !/^(what|why|how|which|should)\b/.test(t)) return 'change';
+  if (EXPLAIN.test(t)) return 'explain';
+  if (/(\brun\b|rerun|\btests?\b|proof)/.test(t) && !QUESTION.test(t)) return 'run';
+  if (/(deploy|ship|launch|live)/.test(t) && !QUESTION.test(t)) return 'deploy';
+  if (/(sign.?off|approv|request)/.test(t) && !QUESTION.test(t)) return 'signoff';
+  return 'open';
+}
+
 interface ReviewInput {
   verdict: ReviewVerdict;
   correction?: string;
@@ -106,7 +129,7 @@ interface NewExample {
 
 export interface AppState {
   signedIn: boolean;
-  authMode: 'demo' | 'supabase';
+  authMode: 'demo' | 'account';
   userEmail: string;
   viewAs: Role;
   workspace: Workspace | null;
@@ -115,13 +138,15 @@ export interface AppState {
   toasts: ToastMsg[];
   inviteOpenFor: string | null;
 
-  signIn: (method: string, email?: string, mode?: 'demo' | 'supabase') => void;
+  signIn: (method: string, email?: string, mode?: 'demo' | 'account') => void;
   signOut: () => void;
-  setupWorkspace: (input: { name: string; domainJoin: boolean; runsOn: 'lyzr' | 'own' }) => void;
+  setupWorkspace: (input: { name: string; domainJoin: boolean; runsOn: 'lyzr' | 'own'; github?: string }) => void;
   setViewAs: (role: Role) => void;
   resetDemo: () => void;
 
-  createProject: (prompt: string) => string;
+  createProject: (prompt: string, opts?: { oneShot?: boolean; studioAgents?: { id: string; name: string; description: string }[] }) => string;
+  setTheme: (pid: string, theme: string) => void;
+  setCustomDomain: (pid: string, domain: string) => void;
   importProject: (info: ImportInfo, frameworkId: FrameworkId | null) => string;
   quickStartDemo: () => string;
   answerConsultant: (pid: string, answers: Partial<ConsultantAnswers>) => void;
@@ -132,9 +157,12 @@ export interface AppState {
   completeBuild: (pid: string) => void;
   runProof: (pid: string, trigger: string) => string | undefined;
   sendChat: (pid: string, text: string) => void;
+  addChat: (pid: string, from: 'user' | 'architect', text: string, ai?: boolean) => void;
   applyChange: (pid: string, kind: ChangeKind, fw?: FrameworkId) => string | null;
   undoChange: (pid: string, changeId: string) => void;
   openPullRequest: (pid: string, changeId: string) => void;
+  recordPush: (pid: string, info: { repo: string; url: string; commitUrl: string }) => void;
+  recordPullRequest: (pid: string, changeId: string, pr: { number: number; url: string }) => void;
   addExample: (pid: string, ex: NewExample) => void;
   deleteExample: (pid: string, itemId: string) => void;
   importCsv: (pid: string, text: string) => number;
@@ -401,6 +429,7 @@ export const useApp = create<AppState>()(
             const ws = defaultWorkspace(input.name || 'Harborline Insurance');
             ws.domainJoin = input.domainJoin;
             ws.runsOn = input.runsOn;
+            if (input.github) ws.github = input.github;
             s.workspace = ws;
             pushAudit(s, 'Arjun', 'created workspace', ws.name);
           }),
@@ -415,17 +444,43 @@ export const useApp = create<AppState>()(
             Object.assign(s, initialState());
           }),
 
-        createProject: (prompt) => {
+        createProject: (prompt, opts) => {
           let id = '';
           set((s) => {
             if (!s.workspace) s.workspace = defaultWorkspace();
             const p = buildProject(s, prompt.trim() || DEFAULT_PROMPT);
             id = p.id;
+            p.mode = opts?.oneShot ? 'oneshot' : 'guided';
+            if (opts?.studioAgents?.length) {
+              p.studioAgents = opts.studioAgents;
+              msg(p, 'architect', `Added ${opts.studioAgents.length} agent${opts.studioAgents.length > 1 ? 's' : ''} from Lyzr Studio: ${opts.studioAgents.map((a) => a.name).join(', ')}. They join the team as they are, and you can edit them in Studio.`);
+            }
+            if (opts?.oneShot) {
+              // One Shot: skip the questions, use sensible defaults and start building straight away.
+              p.chat = p.chat.filter((m) => m.card?.type !== 'questions');
+              p.answers = { users: ['Claims handlers'], systems: ['Gmail', 'Claims database', 'Policy PDFs'], risky: DEFAULT_RISKY, answered: true };
+              p.plan = planFor(p, p.answers);
+              p.planApproved = true;
+              msg(p, 'architect', 'One Shot mode: I skipped the questions and used sensible defaults. The plan is in the Plan tab if you want to check it.', { type: 'plan' });
+              p.build = { status: 'building', step: 0, startedAt: Date.now(), credits: 0 };
+              msg(p, 'architect', 'Building now.', { type: 'build' });
+            }
             s.projects.unshift(p);
-            pushAudit(s, 'Arjun', 'started project', p.name);
+            pushAudit(s, 'Arjun', 'started project', p.name, opts?.oneShot ? 'One Shot' : undefined);
           });
           return id;
         },
+
+        setTheme: (pid, theme) =>
+          withProject(pid, (p) => {
+            p.theme = theme;
+          }),
+
+        setCustomDomain: (pid, domain) =>
+          withProject(pid, (p, s) => {
+            p.customDomain = domain.trim().toLowerCase() || undefined;
+            if (p.customDomain) pushAudit(s, 'Arjun', 'added custom domain', p.name, p.customDomain);
+          }),
 
         importProject: (info, frameworkId) => {
           let id = '';
@@ -588,10 +643,11 @@ export const useApp = create<AppState>()(
               t.includes(frameworkLabel(f).toLowerCase().replace(' sdk', '')) || t.includes(f),
             );
             let kind: ChangeKind | null = null;
-            if (/(police|theft|stolen)/.test(t) || (/\bfix\b/.test(t) && p.version < 2 && !/water/.test(t))) kind = 'theft';
-            else if (/(water|photo|9,?[0-9]{3}|5,?000)/.test(t) || (/\bfix\b/.test(t) && p.version < 3)) kind = 'water';
-            else if (/slack/.test(t)) kind = 'slack';
-            else if (fw && /(switch|move|change|use|convert|port)/.test(t)) kind = 'framework';
+            const q = QUESTION.test(t);
+            if ((/(police|theft|stolen)/.test(t) && !q) || (/\bfix\b/.test(t) && p.version < 2 && !/water/.test(t))) kind = 'theft';
+            else if ((/(water|photo|9,?[0-9]{3}|5,?000)/.test(t) && !q) || (/\bfix\b/.test(t) && p.version < 3)) kind = 'water';
+            else if (/slack/.test(t) && !q) kind = 'slack';
+            else if (fw && /(switch|move|change|use|convert|port)/.test(t) && !/^(what|why|how|which|should)\b/.test(t)) kind = 'framework';
 
             if (kind) {
               const ch = makeChange(s, p, kind, fw);
@@ -609,7 +665,7 @@ export const useApp = create<AppState>()(
               pushAudit(s, 'Arjun', 'changed', p.name, `#${ch.n} ${ch.title} (${ch.before} → ${ch.after})`);
               return;
             }
-            if (/(why|fail|explain|wrong|miss)/.test(t)) {
+            if (EXPLAIN.test(t)) {
               msg(p, 'architect', explainFailures(p));
               return;
             }
@@ -641,6 +697,11 @@ export const useApp = create<AppState>()(
             );
           });
         },
+
+        addChat: (pid, from, text, ai) =>
+          withProject(pid, (p) => {
+            p.chat.push({ id: uid('m'), from, text, at: Date.now(), ai });
+          }),
 
         applyChange: (pid, kind, fw) => {
           let id: string | null = null;
@@ -686,6 +747,32 @@ export const useApp = create<AppState>()(
             ch.pr = 13 + p.changes.filter((c) => c.committed).length;
             s.toasts.push({ id: uid('t'), text: `Pull request #${ch.pr} opened with the proof report attached.`, tone: 'ok' });
             pushAudit(s, 'Arjun', 'opened pull request', p.repo, `#${ch.pr} ${ch.title}`);
+          }),
+
+        recordPush: (pid, info) =>
+          withProject(pid, (p, s) => {
+            const first = !p.github;
+            p.github = { ...info, pushedAt: Date.now() };
+            p.repo = info.repo;
+            msg(
+              p,
+              'architect',
+              first
+                ? `Pushed the code to a new GitHub repository, ${info.repo}. Every change from now on can go there as a pull request with its proof report.`
+                : `Pushed the latest code to ${info.repo}.`,
+            );
+            pushAudit(s, 'Arjun', 'pushed code to GitHub', p.name, info.repo);
+          }),
+
+        recordPullRequest: (pid, changeId, pr) =>
+          withProject(pid, (p, s) => {
+            const ch = p.changes.find((c) => c.id === changeId);
+            if (!ch) return;
+            ch.committed = true;
+            ch.pr = pr.number;
+            ch.prUrl = pr.url;
+            s.toasts.push({ id: uid('t'), text: `Pull request #${pr.number} opened on GitHub with the proof report.`, tone: 'ok' });
+            pushAudit(s, 'Arjun', 'opened pull request', p.repo, `#${pr.number} ${ch.title}`);
           }),
 
         addExample: (pid, ex) =>

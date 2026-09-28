@@ -2,20 +2,25 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUp, Check, FileCode2, GitPullRequest, PanelLeftClose, Play, RotateCcw, Sparkles } from 'lucide-react';
-import { useApp } from '@/lib/store';
+import { chatIntent, useApp } from '@/lib/store';
 import { stepsFor } from '@/lib/store';
 import { useNow } from '@/lib/hooks';
 import { useUI } from '@/lib/ui';
+import { askAI, useServer } from '@/lib/account';
+import { projectFacts } from '@/lib/facts';
 import { buildStep } from '@/lib/stage';
 import { frameworkLabel } from '@/lib/seed';
 import { creditsForRun } from '@/lib/engine';
 import type { ChatMsg, Project } from '@/lib/types';
 import { LogoMark } from '@/components/shell';
+import { PRButton } from './github';
 import { Button, Chip, ProgressBar } from '@/components/ui';
 import { cn, clock } from '@/lib/utils';
 
 export function ChatPanel({ p }: { p: Project }) {
   const sendChat = useApp((s) => s.sendChat);
+  const addChat = useApp((s) => s.addChat);
+  const aiOn = useServer((s) => !!s.features.ai);
   const chatOpen = useUI((s) => s.chatOpen);
   const setChatOpen = useUI((s) => s.setChatOpen);
   const [text, setText] = useState('');
@@ -38,6 +43,17 @@ export function ChatPanel({ p }: { p: Project }) {
       return;
     }
     setPending(t);
+    if (aiOn && chatIntent(p, t) === 'open') {
+      // Nothing scripted matches: let the real model answer from the project's facts.
+      askAI<{ text: string }>({ mode: 'chat', question: t, context: projectFacts(p, useApp.getState().workspace) })
+        .then(({ text }) => {
+          addChat(p.id, 'user', t);
+          addChat(p.id, 'architect', text || 'I could not come up with an answer. Try asking another way.', true);
+        })
+        .catch(() => sendChat(p.id, t))
+        .finally(() => setPending(null));
+      return;
+    }
     setTimeout(() => {
       sendChat(p.id, t);
       setPending(null);
@@ -143,7 +159,12 @@ function Message({ m, p, onSend, focusInput }: { m: ChatMsg; p: Project; onSend:
       <div className="min-w-0 flex-1">
         {!hideText && (
           <div className="text-[13.5px] leading-relaxed text-ink">
-            {m.text}
+            <span className="whitespace-pre-wrap">{m.text}</span>
+            {m.ai && (
+              <span className="ml-1.5 inline-flex items-center rounded border border-accent-line bg-accent-soft px-1 align-middle font-mono text-[9.5px] font-medium uppercase text-accent-ink" title="Written by a real AI model from this project's facts">
+                AI
+              </span>
+            )}
             <span className="ml-1.5 align-middle font-mono text-[10.5px] text-ink3">{clock(m.at)}</span>
           </div>
         )}
@@ -339,7 +360,6 @@ function BuildCard({ p }: { p: Project }) {
 function ReceiptCard({ p, changeId }: { p: Project; changeId: string }) {
   const ch = p.changes.find((c) => c.id === changeId);
   const undoChange = useApp((s) => s.undoChange);
-  const openPullRequest = useApp((s) => s.openPullRequest);
   const openCode = useUI((s) => s.openCode);
   if (!ch) return null;
   return (
@@ -376,15 +396,7 @@ function ReceiptCard({ p, changeId }: { p: Project; changeId: string }) {
           <Button size="sm" onClick={() => openCode(ch.diffFile ?? null, ch.id)} icon={<FileCode2 className="h-3.5 w-3.5" />}>
             View the change
           </Button>
-          {ch.committed ? (
-            <Chip tone="ok" icon={<GitPullRequest className="h-3 w-3" />} className="h-8 !rounded-lg px-3">
-              PR #{ch.pr} open
-            </Chip>
-          ) : (
-            <Button size="sm" variant="primary" onClick={() => openPullRequest(p.id, ch.id)} icon={<GitPullRequest className="h-3.5 w-3.5" />}>
-              Commit and open PR
-            </Button>
-          )}
+          <PRButton p={p} ch={ch} />
           <Button size="sm" variant="ghost" onClick={() => undoChange(p.id, ch.id)} icon={<RotateCcw className="h-3.5 w-3.5" />}>
             Undo
           </Button>

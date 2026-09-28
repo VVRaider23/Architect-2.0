@@ -38,7 +38,7 @@ The demo company, **Harborline Insurance**, is fictional.
 
 ## Demo script (about 3 minutes)
 
-1. **Sign in** with any button, then **Create workspace**.
+1. **Create an account** (or **Continue with GitHub**, or **Try it without an account**), then **Create workspace**.
 2. On Home, pick the **Claims triage** template, then **Plan it**. Answer the 3 questions, then **Draft the plan**.
 3. **Approve plan and build.** Watch the app and its code assemble, or skip ahead.
 4. **Preview → Test mode:** 12 of 15 answers match. Click **Stolen bike** to replay what each agent did, step by step.
@@ -54,19 +54,23 @@ Short on time? On Home, click **Open a finished demo project**. To start over, u
 
 | Brief item | Where | What works |
 |---|---|---|
-| Authentication | `/`, `/setup` | Demo sign-in (GitHub, Google, SSO or an email link). Real sign-in with Supabase when keys are set. |
-| Homepage | `/home` | Changes with the role. **Builder:** prompt, templates, import, projects, "Needs you". **Reviewer:** review queue and impact. **Approver:** launches waiting, rules, decisions. |
-| Chat window | Left panel of a project | Consultant questions, plan, live build progress, change receipts, "why is it failing?", suggestions |
-| App preview | **Preview** tab | The generated app on desktop or mobile. Test mode shows pass or fail per example, with Replay. |
-| Agent section | **Agents** tab | Agent map with per-agent scores. Edit instructions and model, toggle guardrails, see versions. |
+| Authentication | `/`, `/setup` | **Real accounts** (email and password) and **Sign in with GitHub**, with secure sessions. Demo sign-in when no database is set. |
+| Database | every screen | Each person's workspace, projects, reviews and audit trail are **saved in Postgres** and come back on any device. A "Saved" badge shows it. |
+| Homepage | `/home` | Changes with the role. **Builder:** prompt box with the **+ menu** (attach files, add Lyzr Studio agents, prompt library), **Guided / One Shot** switch, **AI Consultant** ideas, projects, "Needs you". **Reviewer:** review queue and impact. **Approver:** launches waiting, rules, decisions. |
+| Chat window | Left panel of a project | Consultant questions, plan, live build progress, change receipts, "why is it failing?". Open questions are answered by a **real AI model** from the project's facts (marked **AI**). |
+| App preview | **Preview** tab | The generated app on desktop or mobile, with **theme presets**. Test mode shows pass or fail per example, with Replay. |
+| Agent section | **Agents** tab | Agent map with per-agent scores. Edit instructions and model, toggle guardrails, **Edit in Lyzr Studio**, and **try the agents on any claim** with a real AI model. |
 | UI getting built | **Preview** tab while building | Build steps, the app assembling and the code being written |
-| GitHub integration | Setup, **Import**, **Code** tab | Real analysis of any public repo. File tree, diffs, a pull request per change, clone command, `.zip` download. |
-| Deploying | **Launch** tab | Preview, Test and Live, sign-off, fast lane, rollback and working app addresses |
+| GitHub integration | Setup, **Import**, **Code** tab | **Real GitHub:** connect your account, see your repos, analyze any repo, **push the generated code to a new repo** and **open real pull requests** with the proof report. |
+| Deploying | **Launch** tab | Preview, Test and Live, sign-off, fast lane, rollback, custom domain and working app addresses |
 | Beyond the brief | **Proof**, review queue, Launch Pack, **Live**, Settings | Answer Key, expert review, launch rules, live flags, audit trail with CSV export |
 
 ### Real vs simulated
 
 **Real:**
+- accounts, sessions and the Postgres database (when `DATABASE_URL` is set)
+- GitHub sign-in, your repos, new repos, commits and pull requests (when the GitHub OAuth app is set)
+- AI answers in chat, the agent playground and the AI Consultant (when an AI key is set)
 - the agent decision engine (the same rules as the generated Python)
 - proof runs, pass/fail and step-by-step traces
 - reviews that become tests, and a guard against the fix memorising one case
@@ -74,14 +78,16 @@ Short on time? On Home, click **Open a finished demo project**. To start over, u
 - the audit trail
 - the generated code: download it and run `pytest`
 - GitHub repo analysis (`/api/github/analyze`)
-- sync across browser tabs, and optional Supabase sign-in and database
+- sync across browser tabs
 
 **Simulated, to keep the demo repeatable:**
-- model calls (the agents' decisions come from the rules engine)
+- the proof engine's decisions come from rules, not model calls, so the story (12 of 15, then fixed) is the same every time
 - whole-app generation (a scripted build)
-- commits and pull requests
 - hosting on Lyzr cloud or your cloud (the deployed app runs inside this prototype at `/apps/<id>`)
+- Gmail, the claims database, Slack and Lyzr Studio agents (sample connections)
 - live traffic numbers
+
+Without any keys, everything still works in demo mode, and work is saved in the browser.
 
 ## Run it locally
 
@@ -90,40 +96,35 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-No keys are needed. Everything is saved in your browser.
+No keys are needed. For a local database, run `node scripts/local-db.mjs` and set `DATABASE_URL=postgres://postgres@127.0.0.1:5433/postgres`.
 
 ## Deploy to Vercel
 
 1. Go to [vercel.com/new](https://vercel.com/new), import this repository and press **Deploy**. No settings are needed.
-2. Optional: add these environment variables in Vercel (**Settings → Environment Variables**):
+2. Turn on the real features by adding them in Vercel (**Settings → Environment Variables**), then redeploy:
 
-| Variable | What it turns on |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Real accounts, with each person's workspace saved in a database |
-| `GITHUB_TOKEN` | Higher GitHub limits for **Import** (a read-only token is enough) |
+| Setting | How to get it | What it turns on |
+|---|---|---|
+| `DATABASE_URL` | **Storage → Create Database → Neon**, connected to the project (added for you) | Real accounts, with each person's work saved in the database |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | github.com → Settings → Developer settings → OAuth Apps → New. Callback URL: `https://<your-site>/api/auth/github/callback` | Sign in with GitHub, your repos, pushing code, pull requests |
+| `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | console.anthropic.com or platform.openai.com | Real AI answers in chat, the agent playground and the AI Consultant |
+| `GITHUB_TOKEN` (optional) | A read-only GitHub token | Higher limits for reading public repos on Import |
 
-### Optional: real sign-in and database with Supabase
-
-1. Create a free project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run [`supabase/schema.sql`](supabase/schema.sql). It creates one table, `app_state`, where each person can only read and write their own row.
-3. In **Authentication → URL Configuration**, set the Site URL to your Vercel address, and add `https://<your-app>.vercel.app/auth/callback` as a redirect URL.
-4. For a quick demo, turn off **Confirm email** under **Authentication → Providers → Email**.
-5. Paste the project URL and anon key into Vercel, then redeploy.
-
-Sign-in then uses real email-and-password accounts, plus GitHub or Google if you enable them in Supabase. Every change is saved to the signed-in person's row.
+Database tables are created automatically on first use; there's no SQL to run. See [`.env.example`](.env.example) for all settings.
 
 ## How it's built
 
-Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Zustand (state saved in the browser) · Supabase (optional) · JSZip · IBM Plex
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Zustand · Postgres (Neon) · GitHub OAuth and REST API · Anthropic or OpenAI · JSZip · IBM Plex
 
 ```
 src/app/                pages: sign-in, setup, home, import, project, review queue,
-                        launch pack, settings, the deployed app, and the GitHub API route
+                        launch pack, settings, the deployed app, and the demo link
 src/components/         UI kit, app shell, chat, project tabs, the generated claims app, code viewer
 src/lib/engine.ts       the agents' decision rules, proof runs and launch-rule checks
 src/lib/codegen.ts      the code Architect generates, for each framework
 src/lib/store.ts        app state and every action: build, review, change, request, decide, deploy
-supabase/schema.sql     optional database table with row-level security
+src/server/             accounts and sessions, the Postgres tables, GitHub OAuth and pushes, AI calls
+src/app/api/            auth, saved state, GitHub, AI and repo analysis routes
 ```
 
 ## Design principles

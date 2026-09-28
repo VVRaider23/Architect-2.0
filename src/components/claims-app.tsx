@@ -7,6 +7,7 @@ import { ACTION_LABEL, KIND_LABEL, money, triage } from '@/lib/engine';
 import { LIVE_FLAG_CLAIMS, SEED_CLAIMS } from '@/lib/seed';
 import type { Claim, ClaimKind, Env, Project } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { themeById } from '@/lib/catalog';
 import { EnvPill, RiskChip, TraceList } from './domain';
 import { Button, Modal, inputCls, textareaCls } from './ui';
 
@@ -24,12 +25,14 @@ export function ClaimsApp({
   version,
   embedded,
   device = 'desktop',
+  theme,
 }: {
   p: Project;
   env: Env;
   version: number;
   embedded?: boolean;
   device?: 'desktop' | 'mobile';
+  theme?: string;
 }) {
   const flagAnswer = useApp((s) => s.flagAnswer);
   const toast = useApp((s) => s.toast);
@@ -44,6 +47,7 @@ export function ClaimsApp({
     return [...local, ...extra, ...base].map((c, i) => ({ c, ...triage(c, version), received: RECEIVED[i % RECEIVED.length] }));
   }, [local, env, version]);
 
+  const th = themeById(theme ?? p.theme);
   const risky = claims.filter((x) => x.verdict.risk === 'high' || x.verdict.risk === 'blocked');
   const shown = section === 'risk' ? risky : claims;
   const current = claims.find((x) => x.c.id === selected);
@@ -52,14 +56,17 @@ export function ClaimsApp({
   const compact = mobile || (!!current && !!embedded);
 
   return (
-    <div className={cn('flex min-h-0 flex-col bg-[#F7F8FA] text-[#1B2230]', embedded ? 'h-full' : 'min-h-screen')}>
+    <div
+      className={cn('flex min-h-0 flex-col bg-[#F7F8FA] text-[#1B2230]', embedded ? 'h-full' : 'min-h-screen')}
+      style={{ ['--app-primary' as string]: th.primary, ['--app-hover' as string]: th.hover, ['--app-soft' as string]: th.soft, fontFamily: th.font } as React.CSSProperties}
+    >
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[#E3E7EE] bg-white px-4">
-        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#0F3B5F] text-[13px] font-bold text-white">H</span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--app-primary)] text-[13px] font-bold text-white">H</span>
         <span className="text-[14px] font-semibold">Harborline Claims</span>
         <EnvPill env={env} version={version} />
         <div className="flex-1" />
         {!mobile && <span className="text-[12px] text-[#5B6576]">Priya S. · Claims handler</span>}
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E7EEF6] text-[11px] font-semibold text-[#0F3B5F]">PS</span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--app-soft)] text-[11px] font-semibold text-[var(--app-primary)]">PS</span>
       </header>
       <div className="flex min-h-0 flex-1">
         {!mobile && (
@@ -76,7 +83,7 @@ export function ClaimsApp({
                 onClick={() => setSection(id)}
                 className={cn(
                   'flex items-center gap-2 rounded-md px-2.5 py-2 text-left',
-                  section === id ? 'bg-[#E7EEF6] font-semibold text-[#0F3B5F]' : 'text-[#3B4454] hover:bg-[#F1F4F8]',
+                  section === id ? 'bg-[var(--app-soft)] font-semibold text-[var(--app-primary)]' : 'text-[#3B4454] hover:bg-[#F1F4F8]',
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -97,7 +104,7 @@ export function ClaimsApp({
             </div>
             <button
               onClick={() => setNewOpen(true)}
-              className="flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-[#0F3B5F] px-3 text-[12.5px] font-medium text-white hover:bg-[#0B2E4A]"
+              className="flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-[var(--app-primary)] px-3 text-[12.5px] font-medium text-white hover:bg-[var(--app-hover)]"
             >
               <Plus className="h-3.5 w-3.5" /> New claim
             </button>
@@ -236,7 +243,7 @@ function ClaimDetail({
             <span className="text-[13px] font-medium">{ACTION_LABEL[verdict.action]}</span>
           </div>
           <p className="mt-1.5 text-[12.5px] text-[#3B4454]">Why: {verdict.reasons[0]}.</p>
-          <button onClick={() => setShowTrace((x) => !x)} className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-[#0F3B5F]">
+          <button onClick={() => setShowTrace((x) => !x)} className="mt-2 inline-flex items-center gap-1 text-[12px] font-medium text-[var(--app-primary)]">
             {showTrace ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />} How it got there
           </button>
           {showTrace && (
@@ -250,7 +257,7 @@ function ClaimDetail({
           <textarea rows={4} value={draft} onChange={(e) => setDraft(e.target.value)} className={APP_TEXTAREA} />
         </label>
         <div className="flex flex-wrap gap-2">
-          <button onClick={onSave} className="h-8 rounded-md bg-[#0F3B5F] px-3 text-[12.5px] font-medium text-white hover:bg-[#0B2E4A]">
+          <button onClick={onSave} className="h-8 rounded-md bg-[var(--app-primary)] px-3 text-[12.5px] font-medium text-white hover:bg-[var(--app-hover)]">
             Save to Gmail drafts
           </button>
           {!flagged && (
@@ -305,7 +312,7 @@ function ClaimDetail({
 }
 
 const APP_TEXTAREA =
-  'w-full resize-none rounded-md border border-[#D5DBE4] bg-white px-3 py-2 text-[12.5px] leading-relaxed text-[#1B2230] placeholder:text-[#8A93A3] focus:border-[#0F3B5F] focus:outline-none';
+  'w-full resize-none rounded-md border border-[#D5DBE4] bg-white px-3 py-2 text-[12.5px] leading-relaxed text-[#1B2230] placeholder:text-[#8A93A3] focus:border-[var(--app-primary)] focus:outline-none';
 
 const KINDS: ClaimKind[] = ['water_damage', 'theft', 'glass', 'roof', 'fire', 'flood', 'hail', 'liability'];
 

@@ -1,62 +1,53 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/lib/store';
-import { getSupabase } from '@/lib/supabase';
-import { loadCloudState } from '@/lib/cloud';
+import { useServer } from '@/lib/account';
+import { enterAccount } from '@/lib/enter';
 import { LogoMark } from '@/components/shell';
 import { Button } from '@/components/ui';
 
-/** Where Supabase sends people back after GitHub, Google or an email link. */
-export default function AuthCallback() {
+export default function AuthCallbackPage() {
+  return (
+    <Suspense>
+      <AuthCallback />
+    </Suspense>
+  );
+}
+
+/** Where people land after approving GitHub. The server has already set the session cookie. */
+function AuthCallback() {
   const router = useRouter();
-  const signIn = useApp((s) => s.signIn);
+  const search = useSearchParams();
   const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const sb = await getSupabase();
-      if (!sb) {
-        router.replace('/');
-        return;
-      }
-      const url = new URL(window.location.href);
-      const desc = url.searchParams.get('error_description');
-      if (desc) {
-        setError(desc);
-        return;
-      }
-      let session = (await sb.auth.getSession()).data.session;
-      const code = url.searchParams.get('code');
-      if (!session && code) {
-        const { data, error: err } = await sb.auth.exchangeCodeForSession(code);
-        if (err) {
-          setError(err.message);
-          return;
-        }
-        session = data.session;
-      }
-      if (!session) {
-        setError('This sign-in link has expired or was already used. Please sign in again.');
-        return;
-      }
-      try {
-        const remote = await loadCloudState();
-        if (remote) useApp.setState({ workspace: remote.workspace, projects: remote.projects ?? [], audit: remote.audit ?? [] });
-      } catch (err) {
-        console.warn('Could not load saved state from Supabase', err);
-      }
+      const { user } = await useServer.getState().refresh();
       if (cancelled) return;
-      const provider = session.user.app_metadata?.provider;
-      signIn(provider === 'github' ? 'GitHub' : provider === 'google' ? 'Google' : 'email', session.user.email ?? undefined, 'supabase');
-      router.replace(useApp.getState().workspace ? '/home' : '/setup');
+      if (!user) {
+        setError('Sign-in did not complete. Please try again.');
+        return;
+      }
+      const next = search.get('next') ?? '/home';
+      const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/home';
+      const app = useApp.getState();
+      if (search.get('connected') && app.signedIn) {
+        // Linked GitHub to an account that was already signed in here: go back to where they were.
+        if (app.authMode !== 'account') app.signIn('GitHub', user.email ?? undefined, 'account');
+        app.toast(`GitHub connected as @${user.github?.login ?? 'you'}.`, 'ok');
+        router.replace(safeNext);
+        return;
+      }
+      await enterAccount(user, 'GitHub', router, safeNext);
+      if (search.get('connected')) useApp.getState().toast(`GitHub connected as @${user.github?.login ?? 'you'}.`, 'ok');
     })();
     return () => {
       cancelled = true;
     };
-  }, [router, signIn]);
+  }, [router, search]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 text-center">

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, Cloud, Server } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { githubUrl, useServer } from '@/lib/account';
 import { Logo, RequireAuth } from '@/components/shell';
 import { Button, inputCls } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -22,18 +23,36 @@ function Setup() {
   const signOut = useApp((s) => s.signOut);
   const router = useRouter();
   const domain = email.split('@')[1] || 'harborline.com';
-  const [name, setName] = useState(domain.startsWith('harborline') ? 'Harborline Insurance' : '');
+  const personalDomain = /^(gmail|googlemail|yahoo|outlook|hotmail|live|icloud|me|proton|protonmail|github)\b/i.test(domain);
+  const accountName = useServer.getState().user?.name;
+  const [name, setName] = useState(
+    domain.startsWith('harborline')
+      ? 'Harborline Insurance'
+      : !/^(gmail|googlemail|yahoo|outlook|hotmail|live|icloud|me|proton|protonmail|github)\b/i.test(domain) && domain.includes('.')
+        ? domain.split('.')[0].replace(/^\w/, (c) => c.toUpperCase())
+        : accountName
+          ? `${accountName.split(' ')[0]}’s workspace`
+          : 'My workspace',
+  );
   const [domainJoin, setDomainJoin] = useState(true);
   const [runsOn, setRunsOn] = useState<'lyzr' | 'own'>('lyzr');
+  const { features, user } = useServer();
+  const realGithub = features.github;
+  const ghLogin = user?.github?.login;
   const [github, setGithub] = useState<'none' | 'connecting' | 'done'>('none');
 
   const connect = () => {
     setGithub('connecting');
+    if (realGithub) {
+      window.location.href = githubUrl('connect', '/setup');
+      return;
+    }
     setTimeout(() => setGithub('done'), 900);
   };
+  const connected = realGithub ? !!ghLogin : github === 'done';
 
   const create = () => {
-    setupWorkspace({ name: name.trim() || 'My workspace', domainJoin, runsOn });
+    setupWorkspace({ name: name.trim() || 'My workspace', domainJoin, runsOn, github: ghLogin });
     router.push('/home');
   };
 
@@ -61,7 +80,13 @@ function Setup() {
                 id="domainJoin"
               />
               <label htmlFor="domainJoin">
-                Anyone with a <span className="font-medium text-ink">@{domain}</span> email can join
+                {personalDomain ? (
+                  'Only people you invite can join'
+                ) : (
+                  <>
+                    Anyone with a <span className="font-medium text-ink">@{domain}</span> email can join
+                  </>
+                )}
               </label>
             </span>
           </label>
@@ -69,18 +94,20 @@ function Setup() {
           <div className="grid gap-2">
             <span className="text-[13px] font-semibold">GitHub</span>
             <div className="flex items-center gap-3 rounded-xl border border-line bg-surface2 px-4 py-3">
-              {github === 'done' ? (
+              {connected ? (
                 <>
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ok-soft text-ok">
                     <Check className="h-4 w-4" />
                   </span>
                   <div className="flex-1 text-[13.5px]">
-                    Connected as <span className="font-semibold">arjun-harborline</span>
+                    Connected as <span className="font-semibold">{ghLogin ? `@${ghLogin}` : 'arjun-harborline'}</span>
                     <div className="text-[12.5px] text-ink2">Used for imports, commits and pull requests.</div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => setGithub('none')}>
-                    Change
-                  </Button>
+                  {!realGithub && (
+                    <Button size="sm" variant="ghost" onClick={() => setGithub('none')}>
+                      Change
+                    </Button>
+                  )}
                 </>
               ) : (
                 <>

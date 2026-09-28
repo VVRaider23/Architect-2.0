@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, ChevronDown, LogOut, RotateCcw } from 'lucide-react';
+import { Check, ChevronDown, CloudCheck, CloudOff, Loader2, LogOut, RotateCcw } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
 import { PEOPLE } from '@/lib/seed';
-import { cloudSignOut } from '@/lib/cloud';
+import { logOutRequest, useServer } from '@/lib/account';
 import type { Role } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Avatar } from './ui';
@@ -128,23 +128,31 @@ export function UserMenu() {
           <div className="px-3 py-2">
             <div className="text-[13px] font-semibold">{me.name}</div>
             <div className="text-[12px] text-ink2">{viewAs === 'builder' ? email || me.email : `${me.email} · demo view`}</div>
-            <div className="mt-1 text-[11.5px] text-ink3">{authMode === 'demo' ? 'Demo sign-in · data saved in this browser' : 'Signed in with Supabase · saved to your account'}</div>
+            <div className="mt-1 text-[11.5px] text-ink3">{authMode === 'demo' ? 'Demo sign-in · saved in this browser' : 'Your account · saved to the database'}</div>
           </div>
           <button
             onClick={() => {
-              if (confirm('Reset the demo? This clears projects and decisions saved in this browser.')) {
+              if (authMode === 'account') {
+                if (confirm('Start over? This deletes the projects saved in your account.')) {
+                  useApp.setState({ projects: [], audit: [] });
+                  router.push('/home');
+                }
+              } else if (confirm('Reset the demo? This clears projects and decisions saved in this browser.')) {
                 resetDemo();
                 router.push('/');
               }
             }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-sunken"
           >
-            <RotateCcw className="h-4 w-4 text-ink2" /> Reset demo data
+            <RotateCcw className="h-4 w-4 text-ink2" /> {authMode === 'account' ? 'Start over' : 'Reset demo data'}
           </button>
           <button
-            onClick={() => {
-              if (authMode === 'supabase') void cloudSignOut();
-              signOut();
+            onClick={async () => {
+              if (authMode === 'account') {
+                await logOutRequest().catch(() => undefined);
+                await useServer.getState().refresh();
+                resetDemo();
+              } else signOut();
               router.push('/');
             }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-sunken"
@@ -154,6 +162,23 @@ export function UserMenu() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Shows whether the latest change reached the database (real accounts only). */
+export function SaveBadge() {
+  const authMode = useApp((s) => s.authMode);
+  const save = useServer((s) => s.save);
+  if (authMode !== 'account') return null;
+  const label = save.status === 'saving' ? 'Saving…' : save.status === 'error' ? 'Not saved yet' : 'Saved';
+  return (
+    <span
+      className={cn('hidden items-center gap-1.5 text-[12px] md:flex', save.status === 'error' ? 'text-bad' : 'text-ink2')}
+      title={save.status === 'error' ? 'Could not reach the database. It will try again with your next change.' : 'Your work is saved to your account'}
+    >
+      {save.status === 'saving' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : save.status === 'error' ? <CloudOff className="h-3.5 w-3.5" /> : <CloudCheck className="h-3.5 w-3.5" />}
+      {label}
+    </span>
   );
 }
 
@@ -188,6 +213,7 @@ export function WorkspaceBar({ right }: { right?: ReactNode }) {
       </nav>
       <div className="flex-1" />
       {right}
+      <SaveBadge />
       {ws && viewAs === 'builder' && <div className="hidden text-[12.5px] text-ink2 lg:block">Credits · {ws.credits.toLocaleString('en-US')}</div>}
       <ViewAsSwitch />
       <UserMenu />

@@ -1,34 +1,25 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, Copy, Download, FileCode2, Folder, GitBranch, GitPullRequest, RotateCcw } from 'lucide-react';
+import { Check, Copy, Download, FileCode2, Folder, GitBranch, RotateCcw, Upload } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useUI } from '@/lib/ui';
 import { generateFiles, languageOf, sortedPaths } from '@/lib/codegen';
 import type { Project } from '@/lib/types';
 import { CodeBlock, DiffBlock } from '@/components/code-view';
+import { PRButton, useGitHub } from './github';
 import { Button, Chip, Empty } from '@/components/ui';
-import { cn, timeAgo } from '@/lib/utils';
+import { branchFor, cn, timeAgo } from '@/lib/utils';
 
-function branchFor(title: string) {
-  return (
-    'fix/' +
-    title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
-      .slice(0, 28)
-  );
-}
 
 export function CodeTab({ p }: { p: Project }) {
   const codeFile = useUI((s) => s.codeFile);
   const diffChangeId = useUI((s) => s.diffChangeId);
   const openCode = useUI((s) => s.openCode);
   const undoChange = useApp((s) => s.undoChange);
-  const openPullRequest = useApp((s) => s.openPullRequest);
   const toast = useApp((s) => s.toast);
   const [copied, setCopied] = useState(false);
+  const gh = useGitHub(p);
   const [zipping, setZipping] = useState(false);
 
   const files = useMemo(() => generateFiles(p), [p]);
@@ -78,7 +69,7 @@ export function CodeTab({ p }: { p: Project }) {
     }
   };
 
-  const cloneCmd = `git clone https://github.com/${p.repo}.git`;
+  const cloneCmd = `git clone https://github.com/${p.github?.repo ?? p.repo}.git`;
   const showDiff = !!change && change.diffFile === file && change.beforeText !== undefined;
 
   return (
@@ -104,9 +95,31 @@ export function CodeTab({ p }: { p: Project }) {
             ))}
           </select>
         </label>
-        <Chip tone="ok" icon={<Check className="h-3 w-3" />} title={`Every change is a commit on ${p.repo}`}>
-          Synced with {p.repo}
-        </Chip>
+        {gh.real ? (
+          p.github ? (
+            <>
+              <a
+                href={p.github.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 rounded-full border border-ok-line bg-ok-soft px-2.5 py-[3px] text-[12px] font-medium text-ok hover:underline"
+              >
+                <Check className="h-3 w-3" /> On GitHub · {p.github.repo} ↗
+              </a>
+              <Button size="sm" loading={gh.busy === 'push'} onClick={gh.push} icon={<Upload className="h-3.5 w-3.5" />}>
+                Push latest
+              </Button>
+            </>
+          ) : (
+            <Button size="sm" variant="dark" loading={gh.busy === 'push'} onClick={gh.push} icon={<Upload className="h-3.5 w-3.5" />}>
+              {gh.canPush ? 'Push to GitHub' : 'Connect GitHub to push'}
+            </Button>
+          )
+        ) : (
+          <Chip tone="ok" icon={<Check className="h-3 w-3" />} title={`Every change is a commit on ${p.repo} (simulated in demo mode)`}>
+            Synced with {p.repo}
+          </Chip>
+        )}
         <div className="flex-1" />
         <button
           onClick={() => {
@@ -199,18 +212,7 @@ export function CodeTab({ p }: { p: Project }) {
                     Show full file
                   </button>
                 )}
-                {change.committed ? (
-                  <span className="flex items-center gap-1 rounded-md bg-[#1E3A27] px-2 py-0.5 text-[#7FD49A]">
-                    <GitPullRequest className="h-3.5 w-3.5" /> PR #{change.pr} open
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => openPullRequest(p.id, change.id)}
-                    className="flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 font-medium text-white hover:bg-accent-ink"
-                  >
-                    <GitPullRequest className="h-3.5 w-3.5" /> Commit and open PR
-                  </button>
-                )}
+                <PRButton p={p} ch={change} dark />
                 <button onClick={() => undoChange(p.id, change.id)} className="flex items-center gap-1 rounded-md border border-code-line px-2 py-0.5 text-code-ink hover:bg-[#2E2C29]">
                   <RotateCcw className="h-3.5 w-3.5" /> Undo
                 </button>

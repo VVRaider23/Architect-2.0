@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Code2, Database, FlaskConical, Lock, Mail, ShieldCheck } from 'lucide-react';
+import { Bot, Code2, Database, ExternalLink, FlaskConical, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useUI } from '@/lib/ui';
 import { AGENT_NAME, agentScores, latestRun } from '@/lib/engine';
@@ -10,6 +10,8 @@ import { generateFiles } from '@/lib/codegen';
 import type { AgentId, Project } from '@/lib/types';
 import { Button, Card, Chip, Empty, SectionLabel, Toggle, textareaCls } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { TryAgents } from './try-agents';
+import { STUDIO_URL } from '@/lib/catalog';
 
 const NODE_W = 156;
 const NODE_H = 66;
@@ -143,6 +145,29 @@ export function AgentsTab({ p }: { p: Project }) {
         </div>
       </Card>
       <AgentDetail key={selected} p={p} id={selected} readOnly={viewAs !== 'builder'} />
+      {!!p.studioAgents?.length && (
+        <Card className="2xl:col-span-2">
+          <div className="text-[15px] font-semibold">From Lyzr Studio</div>
+          <p className="mt-0.5 text-[12.5px] text-ink2">Agents you brought in with the + menu. They run as they are; change them in Studio.</p>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {p.studioAgents.map((a) => (
+              <li key={a.id} className="flex items-start gap-3 rounded-xl border border-line px-3.5 py-3">
+                <Bot className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13.5px] font-semibold">{a.name}</div>
+                  <div className="text-[12.5px] text-ink2">{a.description}</div>
+                </div>
+                <a href={STUDIO_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 whitespace-nowrap text-[12.5px] font-medium text-accent hover:underline">
+                  Edit in Studio <ExternalLink className="h-3 w-3" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+      <div className="2xl:col-span-2">
+        <TryAgents p={p} />
+      </div>
     </div>
   );
 }
@@ -278,6 +303,9 @@ function AgentDetail({ p, id, readOnly }: { p: Project; id: AgentId; readOnly: b
             }}
           >
             Test this agent
+          </Button>
+          <Button size="sm" variant="ghost" href={STUDIO_URL} target="_blank" icon={<ExternalLink className="h-3.5 w-3.5" />}>
+            Edit in Lyzr Studio
           </Button>
         </div>
       )}

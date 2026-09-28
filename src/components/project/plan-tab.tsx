@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, FileText } from 'lucide-react';
+import { AlertTriangle, Check, FileText } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { FRAMEWORKS, frameworkLabel } from '@/lib/seed';
 import { creditsForRun } from '@/lib/engine';
@@ -18,6 +18,7 @@ export function PlanTab({ p }: { p: Project }) {
   const applyChange = useApp((s) => s.applyChange);
   const credits = useApp((s) => s.workspace?.credits ?? 0);
   const viewAs = useApp((s) => s.viewAs);
+  const sendChat = useApp((s) => s.sendChat);
   const plan = p.plan;
   const built = p.build.status === 'done';
   const building = p.build.status === 'building';
@@ -88,6 +89,11 @@ export function PlanTab({ p }: { p: Project }) {
                   <span className="text-ink2">: {a.job.charAt(0).toLowerCase() + a.job.slice(1)}</span>
                 </li>
               ))}
+              {p.studioAgents?.map((a) => (
+                <li key={a.id}>
+                  <span className="font-semibold">{a.name}</span> <span className="text-ink2">(from Lyzr Studio): {a.description.charAt(0).toLowerCase() + a.description.slice(1)}</span>
+                </li>
+              ))}
             </ul>
           </section>
           <section className="grid gap-6 sm:grid-cols-2">
@@ -123,6 +129,35 @@ export function PlanTab({ p }: { p: Project }) {
             <p className="mt-2 text-[12.5px] text-ink2">
               These three become the first tests. Architect adds 12 variations, and your claims expert confirms or corrects them later.
             </p>
+          </section>
+          <section>
+            <Label>Checks before you approve</Label>
+            <ul className="mt-2 grid gap-2 text-[14px]">
+              <li className="flex items-start gap-2">
+                <Check className="mt-1 h-4 w-4 shrink-0 text-ok" />
+                <span>
+                  <b>Agent roles:</b> {p.agents.length} agents, each with one clear job
+                  {p.studioAgents?.length ? `, plus ${p.studioAgents.length} from Lyzr Studio` : ''}.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-1 h-4 w-4 shrink-0 text-ok" />
+                <span>
+                  <b>Flow:</b> claim email in → facts → policy clause → risk score → draft reply → a handler decides and sends.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                {p.slackAlerts ? <Check className="mt-1 h-4 w-4 shrink-0 text-ok" /> : <AlertTriangle className="mt-1 h-4 w-4 shrink-0 text-warn" />}
+                <span className="flex-1">
+                  <b>Missing features:</b> {p.slackAlerts ? 'none found.' : 'nobody is told when a high-risk claim arrives.'}
+                  {!p.slackAlerts && !p.planApproved && viewAs === 'builder' && (
+                    <button onClick={() => sendChat(p.id, 'Add Slack alerts for high-risk claims')} className="ml-2 text-[13px] font-medium text-accent hover:underline">
+                      Add Slack alerts
+                    </button>
+                  )}
+                </span>
+              </li>
+            </ul>
           </section>
           <section>
             <Label>Framework</Label>

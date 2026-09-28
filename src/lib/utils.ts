@@ -41,3 +41,15 @@ export function pct(a: number, b: number) {
 export function plural(n: number, one: string, many = `${one}s`) {
   return `${n} ${n === 1 ? one : many}`;
 }
+
+/** A git branch name for a change, e.g. "Theft claims need a police report" → "fix/theft-claims-need-a-police-r". */
+export function branchFor(title: string) {
+  return (
+    'fix/' +
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .slice(0, 28)
+  );
+}

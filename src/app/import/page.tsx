@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, ArrowRight, Check, FolderGit2, Info, KeyRound, Loader2, Search, Star } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { githubUrl, listMyRepos, useServer } from '@/lib/account';
 import { FRAMEWORKS } from '@/lib/seed';
 import type { FrameworkId } from '@/lib/types';
 import { RequireAuth, WorkspaceBar } from '@/components/shell';
@@ -83,6 +84,23 @@ function Import() {
   const [fw, setFw] = useState<FrameworkId>('langgraph');
   const [genScreens, setGenScreens] = useState(true);
   const [draftKey, setDraftKey] = useState(true);
+  const { features, user } = useServer();
+  const [mine, setMine] = useState<{ name: string; meta: string }[] | null>(null);
+  const [mineError, setMineError] = useState('');
+
+  useEffect(() => {
+    if (!user?.github) return;
+    listMyRepos()
+      .then((r) =>
+        setMine(
+          r.repos.map((x) => ({
+            name: x.name,
+            meta: [x.language, x.private ? 'private' : null, `updated ${new Date(x.pushedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`].filter(Boolean).join(' · '),
+          })),
+        ),
+      )
+      .catch((e) => setMineError(e instanceof Error ? e.message : 'Could not load your repositories.'));
+  }, [user?.github]);
 
   const show = (x: RepoAnalysis) => {
     setA(x);
@@ -154,8 +172,8 @@ function Import() {
               Bring an app or agents you already have. Your code stays in your repo; Architect works on a branch and opens pull requests.
             </p>
           </div>
-          <Chip tone="ok" icon={<Check className="h-3 w-3" />}>
-            GitHub: {github ?? 'connected'}
+          <Chip tone={user?.github || !features.github ? 'ok' : 'neutral'} icon={<Check className="h-3 w-3" />}>
+            GitHub: {user?.github ? `@${user.github.login}` : features.github ? 'not connected' : github ?? 'connected'}
           </Chip>
         </div>
 
@@ -189,8 +207,37 @@ function Import() {
             <Card pad={false}>
               <div className="border-b border-line px-4 py-3">
                 <div className="text-[13.5px] font-semibold">Your repositories</div>
-                <div className="text-[12px] text-ink2">From the connected GitHub account (demo data)</div>
+                <div className="text-[12px] text-ink2">
+                  {user?.github ? `From GitHub · @${user.github.login}` : features.github ? 'Connect GitHub to see your own repos' : 'From the connected GitHub account (demo data)'}
+                </div>
               </div>
+              {user?.github ? (
+                <ul className="scroll-thin max-h-[360px] overflow-y-auto">
+                  {mine === null && !mineError && <li className="px-4 py-3 text-[12.5px] text-ink2">Loading your repositories…</li>}
+                  {mineError && <li className="px-4 py-3 text-[12.5px] text-bad">{mineError}</li>}
+                  {mine?.length === 0 && <li className="px-4 py-3 text-[12.5px] text-ink2">No repositories yet.</li>}
+                  {mine?.map((d) => (
+                    <li key={d.name}>
+                      <button
+                        onClick={() => analyze(d.name)}
+                        className={cn('flex w-full items-center gap-3 border-b border-line px-4 py-3 text-left last:border-0 hover:bg-surface2', a?.repo === d.name && 'bg-accent-soft')}
+                      >
+                        <FolderGit2 className="h-4 w-4 shrink-0 text-ink2" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-mono text-[12.5px] font-medium">{d.name}</span>
+                          <span className="block text-[12px] text-ink2">{d.meta}</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : features.github ? (
+                <div className="px-4 py-4">
+                  <Button size="sm" variant="dark" href={githubUrl('connect', '/import')}>
+                    Connect GitHub
+                  </Button>
+                </div>
+              ) : (
               <ul>
                 {DEMO_REPOS.map((d) => (
                   <li key={d.name}>
@@ -207,6 +254,7 @@ function Import() {
                   </li>
                 ))}
               </ul>
+              )}
             </Card>
           </div>
 

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, Clock, Cloud, ExternalLink, KeyRound, Lock, RotateCcw, ShieldCheck, Undo2, Users, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, CheckCircle2, Clock, Cloud, ExternalLink, Globe, KeyRound, Lock, RotateCcw, ShieldCheck, Undo2, Users, XCircle } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useNow } from '@/lib/hooks';
 import { useUI } from '@/lib/ui';
@@ -58,7 +59,7 @@ export function LaunchTab({ p }: { p: Project }) {
         </div>
         {running && (
           <Link href={`/apps/${p.id}?env=${env}`} target="_blank" title={d.url} className="inline-flex min-w-0 items-center gap-1.5 truncate font-mono text-[12px] text-accent hover:underline">
-            {d.url} <ExternalLink className="h-3 w-3 shrink-0" />
+            {env === 'live' && p.customDomain ? p.customDomain : d.url} <ExternalLink className="h-3 w-3 shrink-0" />
           </Link>
         )}
         {isBuilder && (
@@ -178,6 +179,7 @@ export function LaunchTab({ p }: { p: Project }) {
                   <span className="block text-[12px] text-ink2">or your AWS, Azure, Google Cloud or own servers</span>
                 </span>
               </li>
+              <CustomDomainRow p={p} canEdit={isBuilder} />
               <li className="flex gap-2.5">
                 <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-ink2" />
                 <span>
@@ -216,6 +218,43 @@ export function LaunchTab({ p }: { p: Project }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function CustomDomainRow({ p, canEdit }: { p: Project; canEdit: boolean }) {
+  const setCustomDomain = useApp((s) => s.setCustomDomain);
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(p.customDomain ?? 'claims.harborline.com');
+  const valid = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(value.trim());
+  return (
+    <li className="flex gap-2.5">
+      <Globe className="mt-0.5 h-4 w-4 shrink-0 text-ink2" />
+      <span className="min-w-0 flex-1">
+        Web address: <b className="break-all">{p.customDomain ?? p.deployments.live.url}</b>
+        {p.customDomain && <span className="block text-[12px] text-ink2">Add a CNAME record for {p.customDomain} pointing to cname.architect.new</span>}
+        {canEdit &&
+          (editing ? (
+            <span className="mt-1.5 flex gap-1.5">
+              <input className="h-8 min-w-0 flex-1 rounded-lg border border-line2 px-2 text-[12.5px]" value={value} onChange={(e) => setValue(e.target.value)} aria-label="Custom domain" />
+              <Button
+                size="sm"
+                variant="primary"
+                disabled={!valid}
+                onClick={() => {
+                  setCustomDomain(p.id, value);
+                  setEditing(false);
+                }}
+              >
+                Save
+              </Button>
+            </span>
+          ) : (
+            <button onClick={() => setEditing(true)} className="block text-[12.5px] font-medium text-accent hover:underline">
+              {p.customDomain ? 'Change custom domain' : 'Add custom domain'}
+            </button>
+          ))}
+      </span>
+    </li>
   );
 }
 

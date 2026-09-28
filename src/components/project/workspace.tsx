@@ -10,7 +10,7 @@ import { useUI } from '@/lib/ui';
 import { latestRun } from '@/lib/engine';
 import { arrivedFlags, launchPath, nextAction, openTasks, pathHint, pendingRequest, stageLabel } from '@/lib/stage';
 import type { Project, Role, Tab } from '@/lib/types';
-import { Logo, UserMenu, ViewAsSwitch } from '@/components/shell';
+import { Logo, SaveBadge, UserMenu, ViewAsSwitch } from '@/components/shell';
 import { LaunchPathBar } from '@/components/domain';
 import { Button, Chip } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -258,6 +258,7 @@ function TopBar({ p, now }: { p: Project; now: number }) {
         </Chip>
       </nav>
       <div className="flex-1" />
+      <SaveBadge />
       {viewAs === 'builder' && (
         <>
           <Button size="sm" variant="ghost" icon={<UserPlus className="h-3.5 w-3.5" />} onClick={() => setInviteOpen(p.id)} className="hidden sm:inline-flex">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, ExternalLink, Loader2, Monitor, Play, Smartphone } from 'lucide-react';
+import { Check, ExternalLink, Loader2, Monitor, Palette, Play, Smartphone } from 'lucide-react';
 import { useApp, STEP_MS, stepsFor } from '@/lib/store';
 import { useNow } from '@/lib/hooks';
 import { useUI } from '@/lib/ui';
@@ -14,12 +14,14 @@ import { ClaimsApp } from '@/components/claims-app';
 import { MatchMark, RiskChip, verdictShort } from '@/components/domain';
 import { Button, Empty, Toggle } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { APP_THEMES } from '@/lib/catalog';
 
 export function PreviewTab({ p }: { p: Project }) {
   const testMode = useUI((s) => s.testMode);
   const setTestMode = useUI((s) => s.setTestMode);
   const openReplay = useUI((s) => s.openReplay);
   const runProof = useApp((s) => s.runProof);
+  const setTheme = useApp((s) => s.setTheme);
   const viewAs = useApp((s) => s.viewAs);
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop');
 
@@ -64,6 +66,19 @@ export function PreviewTab({ p }: { p: Project }) {
           <Toggle checked={testMode} onChange={setTestMode} label="Test mode" />
           Test mode
         </label>
+        {!testMode && viewAs === 'builder' && (
+          <label className="flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface2 px-2 text-[12.5px] text-ink2">
+            <Palette className="h-3.5 w-3.5" />
+            Theme
+            <select className="bg-transparent font-medium text-ink focus:outline-none" value={p.theme ?? 'harbor'} onChange={(e) => setTheme(p.id, e.target.value)} aria-label="App theme">
+              {APP_THEMES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <span className="text-[13px] text-ink2">
           {testMode ? (
             <>
