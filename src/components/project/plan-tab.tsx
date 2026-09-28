@@ -196,7 +196,7 @@ export function PlanTab({ p }: { p: Project }) {
                 Build <b>≈ 140 credits</b>
               </div>
               <div className="rounded-lg bg-surface2 px-3 py-2">
-                Each proof run <b>≈ {creditsForRun(15)} credits</b>
+                Each test run <b>≈ {creditsForRun(15)} credits</b>
               </div>
               <div className="rounded-lg bg-surface2 px-3 py-2">
                 Running <b>≈ 6 credits</b> per 100 claims

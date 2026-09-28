@@ -43,7 +43,7 @@ export function PreviewTab({ p }: { p: Project }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-wrap items-center gap-3 border-b border-line bg-surface px-5 py-2.5">
+      <div className="flex flex-wrap items-center gap-3 border-b border-line bg-surface px-5 py-2.5" data-tour="test-bar">
         <div className="flex rounded-lg border border-line bg-surface2 p-0.5" role="group" aria-label="Device">
           {(
             [
@@ -94,7 +94,7 @@ export function PreviewTab({ p }: { p: Project }) {
         <div className="flex-1" />
         {viewAs === 'builder' && (
           <Button size="sm" icon={<Play className="h-3.5 w-3.5" />} onClick={() => runProof(p.id, 'Run from Preview')}>
-            Run proof again · ≈ {creditsForRun(p.answerKey.length)} credits
+            Run the tests again · ≈ {creditsForRun(p.answerKey.length)} credits
           </Button>
         )}
         <Button size="sm" variant="ghost" href={`/apps/${p.id}?env=preview`} target="_blank" icon={<ExternalLink className="h-3.5 w-3.5" />}>

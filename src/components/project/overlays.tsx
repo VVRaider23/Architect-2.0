@@ -6,7 +6,7 @@ import { useApp } from '@/lib/store';
 import { useUI } from '@/lib/ui';
 import { useNow } from '@/lib/hooks';
 import { ACTION_LABEL, AGENT_NAME, KIND_LABEL, evaluate, latestRun, money } from '@/lib/engine';
-import { approvedFor, rulesFor } from '@/lib/stage';
+import { AUDIENCES, approvedFor, rulesFor } from '@/lib/stage';
 import type { Invite, Project, Role } from '@/lib/types';
 import { MatchMark, RiskChip, TraceList } from '@/components/domain';
 import { Button, Modal, inputCls, textareaCls } from '@/components/ui';
@@ -102,7 +102,6 @@ export function InviteModal({ p }: { p: Project }) {
   );
 }
 
-const AUDIENCES = ['Claims team (12 people)', 'All claims handlers (40 people)', 'Everyone at Harborline'];
 
 export function SignoffModal({ p }: { p: Project }) {
   const env = useUI((s) => s.signoff);
@@ -145,7 +144,7 @@ export function SignoffModal({ p }: { p: Project }) {
             onClick={() => {
               const r = requestSignoff(p.id, where, audience);
               close();
-              if (r) setTab('launch');
+              if (r) setTab('signoff');
             }}
           >
             {fast ? 'Launch via the fast lane' : 'Send to Farah'}
@@ -193,7 +192,7 @@ export function SignoffModal({ p }: { p: Project }) {
         {!pass ? (
           <Note tone="bad">Sign-off opens when every launch rule passes. Fix what is red first; Architect can help in chat.</Note>
         ) : approvedFor(p, where) ? (
-          <Note tone="ok">v{p.version} is already approved for {where === 'test' ? 'Test' : 'Live'}. Deploy it from the Launch tab.</Note>
+          <Note tone="ok">v{p.version} is already approved for {where === 'test' ? 'Test' : 'Live'}. Deploy it from Ship.</Note>
         ) : fast ? (
           <Note tone="ok">
             This can take the <b>fast lane</b>: every rule passes, it isn’t the first launch, and data access hasn’t changed. Farah is told afterwards.

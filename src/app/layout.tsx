@@ -8,6 +8,7 @@ import '@fontsource/ibm-plex-mono/latin-500.css';
 import './globals.css';
 import { Toaster } from '@/components/shell';
 import { SyncState } from '@/components/sync';
+import { TourCard } from '@/components/tour';
 
 export const metadata: Metadata = {
   title: 'Architect 2.0 · Build it. Prove it. Ship it.',
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-bg text-ink antialiased">
         {children}
         <Toaster />
+        <TourCard />
         <SyncState />
       </body>
     </html>

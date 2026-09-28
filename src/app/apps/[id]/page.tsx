@@ -39,7 +39,7 @@ function DeployedApp() {
         <span className="hidden sm:inline">Built with Architect</span>
         <span className="truncate font-mono text-[11.5px] text-white">https://{d.url}</span>
         <div className="flex-1" />
-        <Link href={`/p/${p.id}?tab=${env === 'preview' ? 'preview' : env === 'live' ? 'live' : 'launch'}`} className="inline-flex items-center gap-1 whitespace-nowrap text-white hover:underline">
+        <Link href={`/p/${p.id}?tab=${env === 'preview' ? 'preview' : env === 'live' ? 'live' : 'ship'}`} className="inline-flex items-center gap-1 whitespace-nowrap text-white hover:underline">
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Architect
         </Link>
       </div>
@@ -50,9 +50,9 @@ function DeployedApp() {
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-[#F7F8FA] px-5 text-center">
           <h1 className="text-[20px] font-semibold">Nothing is deployed to {env === 'live' ? 'Live' : 'Test'} yet</h1>
-          <p className="max-w-md text-[14px] text-ink2">Request sign-off in Architect. Once it is approved, deploy from the Launch tab and the app appears at this address.</p>
-          <Button href={`/p/${p.id}?tab=launch`} variant="primary">
-            Open the Launch tab
+          <p className="max-w-md text-[14px] text-ink2">Request sign-off in Architect. Once it is approved, deploy it from Ship and the app appears at this address.</p>
+          <Button href={`/p/${p.id}?tab=ship`} variant="primary">
+            Open Ship in Architect
           </Button>
         </div>
       )}

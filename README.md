@@ -2,7 +2,7 @@
 
 A working prototype of the next version of [architect.new](https://architect.new): build an AI-agent app from a prompt or from your own repo, **prove** it with your experts' examples, and **ship** it with IT's sign-off.
 
-**Live demo:** [architect-2-0-alpha.vercel.app](https://architect-2-0-alpha.vercel.app) · **Try it in 3 minutes:** follow the [demo script](#demo-script-about-3-minutes).
+**Live demo:** [architect-2-0-alpha.vercel.app](https://architect-2-0-alpha.vercel.app) · **New here?** Open the site and click **Take the guided tour**. No sign-in needed; a narrator walks you through the whole loop in about 3 minutes.
 
 ---
 
@@ -26,7 +26,7 @@ Developers at insurers, banks and hospitals can now build an agent app in days. 
 
 ## Three people, one project
 
-Use the **View as** switch (top right) to see the same project as each person. It's a demo shortcut, so you don't need three accounts.
+Use the **View as** switch (top right) to see the same project as each person. It's a demo shortcut, so you don't need three accounts. The guided tour switches for you.
 
 | Person | Role | Sees |
 |---|---|---|
@@ -38,17 +38,19 @@ The demo company, **Harborline Insurance**, is fictional.
 
 ## Demo script (about 3 minutes)
 
+**Fastest:** on the front page, click **Take the guided tour**. It builds a fresh app with you, highlights the button to press at each step, switches between Arjun, Meera and Farah, and can do each step for you. Or do it by hand:
+
 1. **Create an account** (or **Continue with GitHub**, or **Try it without an account**), then **Create workspace**.
 2. On Home, pick the **Claims triage** template, then **Plan it**. Answer the 3 questions, then **Draft the plan**.
 3. **Approve plan and build.** Watch the app and its code assemble, or skip ahead.
-4. **Preview → Test mode:** 12 of 15 answers match. Click **Stolen bike** to replay what each agent did, step by step.
+4. **Build → App, in test mode:** 12 of 15 answers match. Click **Stolen bike** to replay what each agent did, step by step.
 5. **Invite a reviewer.** Then **Waiting on Meera** switches you to Meera. Press **R** (right) or **W** (wrong); the three theft claims are wrong.
 6. Back as Arjun, click **Fix 6 failing examples**. The change receipt shows *fixed 6, broke 0*. View the diff and open a pull request.
 7. **Request sign-off.** As Farah, read the **Launch Pack**, then choose **Approve with conditions**.
-8. **Deploy v2 to Test** and open the pilot app. About 25 seconds later, two claims handlers flag water-damage answers (see the **Live** tab).
+8. **Deploy v2 to Test** and open the pilot app. About 25 seconds later, two claims handlers flag water-damage answers (see **Learn**).
 9. **Send them to Meera.** She marks them wrong, you fix them, and the fix takes the **fast lane** to Test. Then **Request Live approval**, approve, and **Deploy to Live**.
 
-Short on time? On Home, click **Open a finished demo project**. To start over, use **Reset demo data** in the account menu.
+Short on time? On Home, click **Open a finished example**. To start over, use **Reset demo data** in the account menu.
 
 ## What's in it
 
@@ -58,12 +60,13 @@ Short on time? On Home, click **Open a finished demo project**. To start over, u
 | Database | every screen | Each person's workspace, projects, reviews and audit trail are **saved in Postgres** and come back on any device. A "Saved" badge shows it. |
 | Homepage | `/home` | Changes with the role. **Builder:** prompt box with the **+ menu** (attach files, add Lyzr Studio agents, prompt library), **Guided / One Shot** switch, **AI Consultant** ideas, projects, "Needs you". **Reviewer:** review queue and impact. **Approver:** launches waiting, rules, decisions. |
 | Chat window | Left panel of a project | Consultant questions, plan, live build progress, change receipts, "why is it failing?". Open questions are answered by a **real AI model** from the project's facts (marked **AI**). |
-| App preview | **Preview** tab | The generated app on desktop or mobile, with **theme presets**. Test mode shows pass or fail per example, with Replay. |
-| Agent section | **Agents** tab | Agent map with per-agent scores. Edit instructions and model, toggle guardrails, **Edit in Lyzr Studio**, and **try the agents on any claim** with a real AI model. |
-| UI getting built | **Preview** tab while building | Build steps, the app assembling and the code being written |
-| GitHub integration | Setup, **Import**, **Code** tab | **Real GitHub:** connect your account, see your repos, analyze any repo, **push the generated code to a new repo** and **open real pull requests** with the proof report. |
-| Deploying | **Launch** tab | Preview, Test and Live, sign-off, fast lane, rollback, custom domain and working app addresses |
-| Beyond the brief | **Proof**, review queue, Launch Pack, **Live**, Settings | Answer Key, expert review, launch rules, live flags, audit trail with CSV export |
+| App preview | **Build → App** | The generated app on desktop or mobile, with **theme presets**. Test mode shows pass or fail per example, with Replay. |
+| Agent section | **Build → Agents** | Agent map with per-agent scores. Edit instructions and model, toggle guardrails, **Edit in Lyzr Studio**, and **try the agents on any claim** with a real AI model. |
+| UI getting built | **Build → App** while building | Build steps, the app assembling and the code being written |
+| GitHub integration | Setup, **Import**, **Build → Code** | **Real GitHub:** connect your account, see your repos, analyze any repo, **push the generated code to a new repo** and **open real pull requests** with the test report. |
+| Deploying | **Sign off** and **Ship** | Launch rules and requests, then Preview, Test and Live, fast lane, rollback, custom domain and working app addresses |
+| First-time help | Front page, Home, every step | **Guided tour** (a narrator that runs the whole story and can do each step for you), a plain-words header on every step, and a "Next" line that always matches the main button |
+| Beyond the brief | **Prove**, review queue, Launch Pack, **Learn**, Settings | Answer Key, expert review, launch rules, live flags, audit trail with CSV export |
 
 ### Real vs simulated
 
@@ -118,7 +121,7 @@ Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS · Zustand · 
 
 ```
 src/app/                pages: sign-in, setup, home, import, project, review queue,
-                        launch pack, settings, the deployed app, and the demo link
+                        launch pack, settings, the deployed app, the demo link and the guided tour
 src/components/         UI kit, app shell, chat, project tabs, the generated claims app, code viewer
 src/lib/engine.ts       the agents' decision rules, proof runs and launch-rule checks
 src/lib/codegen.ts      the code Architect generates, for each framework
@@ -129,7 +132,8 @@ src/app/api/            auth, saved state, GitHub, AI and repo analysis routes
 
 ## Design principles
 
-- **The launch path is the spine.** Builders already have many ways to build; what's missing is proof and sign-off. Every screen shows where the app is on Build → Prove → Sign off → Ship → Learn, and one main button says what to do next.
+- **The journey is the menu.** Builders already have many ways to build; what's missing is proof and sign-off. A project has one menu, Build → Prove → Sign off → Ship → Learn, that shows where the app is. Each step opens with the question it answers, who does it and what unlocks it, and one main button says what to do next.
+- **Show, then explain.** A first-time visitor can take a guided tour that builds a real app with them instead of reading about it. Words are plain: "wrong answers", not "failed evals".
 - **Each person sees only their job.** Meera sees answers, never code. Farah sees evidence, never code.
 - **Evidence, not claims.** Every line in a Launch Pack comes from a test run, a trace, a commit or a setting. Nothing is typed by the builder.
 - **Every change gets a receipt.** It lists the files changed, what it fixed, what it broke and what it cost, with undo and a pull request.

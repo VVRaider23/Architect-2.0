@@ -2,14 +2,15 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, Info, Loader2, Mail, MailCheck, PlayCircle } from 'lucide-react';
+import { ArrowRight, Compass, Info, Loader2, Mail, MailCheck, PlayCircle } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
 import { githubUrl, logInRequest, signUpRequest, useServer } from '@/lib/account';
 import { enterAccount } from '@/lib/enter';
 import { Logo, LogoMark } from '@/components/shell';
 import { LoopArt } from '@/components/loop-art';
-import { Button, inputCls } from '@/components/ui';
+import { Avatar, Button, inputCls } from '@/components/ui';
+import { PEOPLE } from '@/lib/seed';
 import { cn } from '@/lib/utils';
 
 type Method = 'GitHub' | 'Google' | 'SSO' | 'email';
@@ -92,21 +93,30 @@ function SignIn() {
         </div>
         <div className="max-w-[560px]">
           <h1 className="text-[40px] font-semibold leading-[1.08] tracking-tight">Build agent apps your experts trust and your IT team approves.</h1>
-          <ol className="mt-8 grid gap-4">
-            {[
-              ['Build', 'from a prompt or your repo, in the framework you choose.'],
-              ['Prove', 'it with your experts’ own examples, rerun on every change.'],
-              ['Ship', 'with IT’s sign-off, on your cloud or ours.'],
-            ].map(([h, t], i) => (
-              <li key={h} className="flex gap-3.5">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#4A4742] font-mono text-[12px] text-[#C9C5BC]">{i + 1}</span>
-                <p className="text-[16px] leading-relaxed text-[#C9C5BC]">
-                  <span className="font-semibold text-white">{h}</span> {t}
-                </p>
-              </li>
-            ))}
-          </ol>
-          <LoopArt className="mt-8 w-full max-w-[480px]" />
+          <p className="mt-4 text-[16px] leading-relaxed text-[#C9C5BC]">
+            Describe the app in a sentence. Architect builds it, your expert proves the answers are right, and IT signs off before anyone relies on it.
+          </p>
+          <ul className="mt-7 grid gap-3 sm:grid-cols-3" aria-label="The three people in every project">
+            {(
+              [
+                ['builder', 'builds it', 'accent'],
+                ['reviewer', 'checks the answers', 'ok'],
+                ['approver', 'approves the launch', 'warn'],
+              ] as const
+            ).map(([role, does, tone]) => {
+              const person = PEOPLE.find((x) => x.role === role)!;
+              return (
+                <li key={role} className="flex items-center gap-2.5 rounded-xl border border-[#3A3834] bg-[#252421] px-3 py-2.5">
+                  <Avatar initials={person.initials} size={30} tone={tone} />
+                  <span className="text-[13px] leading-tight">
+                    <span className="block font-semibold text-white">{person.short}</span>
+                    <span className="block text-[#9C988F]">{does}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <LoopArt className="mt-6 w-full max-w-[460px]" />
         </div>
         <p className="text-[12.5px] text-[#9C988F]">A working prototype of Architect 2.0, the next version of architect.new.</p>
       </section>
@@ -116,7 +126,20 @@ function SignIn() {
           <Logo href="/" />
         </div>
         <div className="w-full max-w-[400px]">
-          <h2 className="text-[26px] font-semibold tracking-tight">{accounts && tab === 'create' ? 'Create your account' : 'Sign in'}</h2>
+          <div className="rounded-2xl border border-accent-line bg-accent-soft/60 p-5">
+            <div className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-accent-ink">
+              <Compass className="h-4 w-4" /> New here?
+            </div>
+            <div className="mt-1.5 text-[19px] font-semibold tracking-tight">See the whole thing in 3 minutes</div>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-ink2">A guided tour builds a real app with you, from one sentence to real users. You play all three people. No sign-in needed.</p>
+            <Button className="mt-4" size="lg" variant="primary" full href="/tour" icon={<ArrowRight className="h-4 w-4" />}>
+              Take the guided tour
+            </Button>
+          </div>
+          <div className="my-7 flex items-center gap-3 text-[12px] text-ink3">
+            <span className="h-px flex-1 bg-line" /> or sign in to build your own <span className="h-px flex-1 bg-line" />
+          </div>
+          <h2 className="text-[24px] font-semibold tracking-tight">{accounts && tab === 'create' ? 'Create your account' : 'Sign in'}</h2>
           <p className="mt-1 text-[14px] text-ink2">Build it. Prove it. Ship it.</p>
 
           {!loaded ? (

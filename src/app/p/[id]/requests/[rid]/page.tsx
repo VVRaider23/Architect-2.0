@@ -7,7 +7,7 @@ import { AlertTriangle, ArrowRight, Check, CheckCircle2, Download, ExternalLink,
 import { useApp, useProject } from '@/lib/store';
 import { useNow } from '@/lib/hooks';
 import { graderAgreement } from '@/lib/engine';
-import { ENV_LABEL, STATUS_LABEL } from '@/lib/stage';
+import { CONDITIONS, ENV_LABEL, STATUS_LABEL } from '@/lib/stage';
 import type { LaunchRequest, Project, RequestStatus } from '@/lib/types';
 import { Logo, RequireAuth, UserMenu, ViewAsSwitch } from '@/components/shell';
 import { MissingProject } from '@/components/missing';
@@ -57,7 +57,7 @@ function LaunchPack() {
             {ws?.name}
           </Link>
           <span className="text-ink3">/</span>
-          <Link href={`/p/${p.id}?tab=launch`} className="truncate font-semibold hover:underline">
+          <Link href={`/p/${p.id}?tab=signoff`} className="truncate font-semibold hover:underline">
             {p.name}
           </Link>
           <Chip tone="warn">Launch request #{r.n}</Chip>
@@ -257,7 +257,7 @@ function LaunchPack() {
           ) : (
             <DecisionSummary r={r} onDeploy={() => {
               useApp.getState().setViewAs('builder');
-              router.push(`/p/${p.id}?tab=launch`);
+              router.push(`/p/${p.id}?tab=ship`);
             }} viewAs={viewAs} />
           )}
         </aside>
@@ -275,10 +275,6 @@ function Line({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   );
 }
 
-const CONDITIONS = {
-  test: ['Only the claims team (12 people)', 'Review again in 30 days', 'Pause if the match drops below 95%'],
-  live: ['Weekly expert spot checks', 'Review again in 30 days', 'Pause if the match drops below 95%'],
-};
 
 function DecisionForm({ p, r }: { p: Project; r: LaunchRequest }) {
   const decide = useApp((s) => s.decide);
@@ -296,7 +292,7 @@ function DecisionForm({ p, r }: { p: Project; r: LaunchRequest }) {
     { id: 'rejected', label: 'Reject' },
   ];
   return (
-    <Card className="print:hidden">
+    <Card className="print:hidden" tour="decision">
       <div className="text-[14px] font-semibold">Your decision</div>
       {!allPass && <p className="mt-1 text-[12.5px] text-bad">Some launch rules fail. You can still decide, and your reason is recorded.</p>}
       <div className="mt-3 grid gap-2" role="radiogroup" aria-label="Decision">

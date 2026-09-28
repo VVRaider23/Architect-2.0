@@ -59,7 +59,7 @@ export const BUILD_STEPS = [
   'Agents: Triage lead, Intake reader, Policy checker',
   'Agent: Risk scorer',
   'Connect Gmail and the claims database',
-  'First proof run',
+  'First test run',
   'Commit to GitHub',
 ];
 export const IMPORT_STEPS = [
@@ -69,7 +69,7 @@ export const IMPORT_STEPS = [
   'Screens: Claims inbox, Claim detail',
   'Draft a starter Answer Key',
   'Connect Gmail and the claims database',
-  'First proof run',
+  'First test run',
   'Open a pull request',
 ];
 export const stepsFor = (p: Pick<Project, 'importedFrom'>) => (p.importedFrom ? IMPORT_STEPS : BUILD_STEPS);
@@ -107,7 +107,7 @@ export function chatIntent(p: Project, raw: string): 'invite' | 'plan' | 'queued
   return 'open';
 }
 
-interface ReviewInput {
+export interface ReviewInput {
   verdict: ReviewVerdict;
   correction?: string;
   correctRisk?: Risk;
@@ -175,6 +175,8 @@ export interface AppState {
   rollback: (pid: string, env: 'test' | 'live') => void;
   flagAnswer: (pid: string, env: Env, claim: Claim, verdict: Verdict, note: string, by: string) => void;
   sendFlagToReview: (pid: string, flagId: string) => void;
+  /** Guided tour: flags from the pilot arrive now instead of in 25 seconds. */
+  arriveFlagsNow: (pid: string) => void;
   updateAgent: (pid: string, agentId: AgentId, patch: { instructions?: string; model?: string }) => void;
   toggleGuardrail: (pid: string, agentId: AgentId, gid: string) => void;
   updateRules: (patch: Partial<LaunchRules>) => void;
@@ -268,7 +270,7 @@ function finishBuild(s: AppState, p: Project) {
   msg(
     p,
     'architect',
-    `${p.importedFrom ? `Pull request #1 on ${p.repo} adds agent.yaml, tracing, an Answer Key and a proof workflow.` : 'The first build is ready.'} The first proof run is in: ${run.passed} of ${run.total} answers match the Answer Key. ${
+    `${p.importedFrom ? `Pull request #1 on ${p.repo} adds agent.yaml, tracing, an Answer Key and a proof workflow.` : 'The first build is ready.'} The first test run is in: ${run.passed} of ${run.total} answers match the Answer Key. ${
       misses ? `The ${misses} misses are all theft claims.` : ''
     } Want your claims expert to check the answers?`,
     { type: 'run', runId: run.id },
@@ -287,7 +289,7 @@ function finishBuild(s: AppState, p: Project) {
       ],
     },
   });
-  pushAudit(s, 'Architect', 'built', p.name, `First proof run ${run.passed}/${run.total}`);
+  pushAudit(s, 'Architect', 'built', p.name, `First test run ${run.passed}/${run.total}`);
 }
 
 function makeChange(s: AppState, p: Project, kind: ChangeKind, fw?: FrameworkId): ChangeReceipt | null {
@@ -505,7 +507,7 @@ export const useApp = create<AppState>()(
             msg(
               p,
               'architect',
-              'Heads up: in this prototype the proof engine runs one worked example, an insurance claims assistant. The repo reading above is real; the plan, tests and code below use that example so you can see the whole flow.',
+              'Heads up: in this prototype the test engine runs one worked example, an insurance claims assistant. The repo reading above is real; the plan, tests and code below use that example so you can see the whole flow.',
             );
             p.answers = {
               users: ['Claims handlers'],
@@ -675,7 +677,7 @@ export const useApp = create<AppState>()(
               return;
             }
             if (/(deploy|ship|launch|live)/.test(t)) {
-              msg(p, 'architect', 'Open the Launch tab: request sign-off first, then deploy to Test and Live from there.');
+              msg(p, 'architect', 'Use Sign off to ask Farah for approval, then deploy to Test and Live from Ship.');
               return;
             }
             if (/(sign.?off|approv|request)/.test(t)) {
@@ -745,7 +747,7 @@ export const useApp = create<AppState>()(
             if (!ch || ch.committed) return;
             ch.committed = true;
             ch.pr = 13 + p.changes.filter((c) => c.committed).length;
-            s.toasts.push({ id: uid('t'), text: `Pull request #${ch.pr} opened with the proof report attached.`, tone: 'ok' });
+            s.toasts.push({ id: uid('t'), text: `Pull request #${ch.pr} opened with the test report attached.`, tone: 'ok' });
             pushAudit(s, 'Arjun', 'opened pull request', p.repo, `#${ch.pr} ${ch.title}`);
           }),
 
@@ -771,7 +773,7 @@ export const useApp = create<AppState>()(
             ch.committed = true;
             ch.pr = pr.number;
             ch.prUrl = pr.url;
-            s.toasts.push({ id: uid('t'), text: `Pull request #${pr.number} opened on GitHub with the proof report.`, tone: 'ok' });
+            s.toasts.push({ id: uid('t'), text: `Pull request #${pr.number} opened on GitHub with the test report.`, tone: 'ok' });
             pushAudit(s, 'Arjun', 'opened pull request', p.repo, `#${pr.number} ${ch.title}`);
           }),
 
@@ -1130,6 +1132,15 @@ export const useApp = create<AppState>()(
             p.flags.push({ id: uid('flag'), claim, verdict, env, by, note, at: Date.now(), status: 'open' });
             s.toasts.push({ id: uid('t'), text: 'Thanks. The answer was flagged for the team.', tone: 'ok' });
             pushAudit(s, by, 'flagged an answer', p.name, claim.title);
+          }),
+
+        arriveFlagsNow: (pid) =>
+          withProject(pid, (p) => {
+            const now = Date.now();
+            const later = p.flags.filter((f) => f.at > now);
+            later.forEach((f, i) => {
+              f.at = now - (later.length - i) * 4000;
+            });
           }),
 
         sendFlagToReview: (pid, flagId) =>

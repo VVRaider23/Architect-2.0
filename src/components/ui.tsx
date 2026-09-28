@@ -123,8 +123,12 @@ export function Chip({
   );
 }
 
-export function Card({ children, className, pad = true }: { children: ReactNode; className?: string; pad?: boolean }) {
-  return <div className={cn('rounded-xl border border-line bg-surface shadow-card', pad && 'p-4', className)}>{children}</div>;
+export function Card({ children, className, pad = true, tour }: { children: ReactNode; className?: string; pad?: boolean; tour?: string }) {
+  return (
+    <div data-tour={tour} className={cn('rounded-xl border border-line bg-surface shadow-card', pad && 'p-4', className)}>
+      {children}
+    </div>
+  );
 }
 
 export function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {

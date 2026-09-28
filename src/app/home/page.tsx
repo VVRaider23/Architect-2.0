@@ -10,6 +10,7 @@ import {
   Lightbulb,
   CheckCircle2,
   ClipboardCheck,
+  Compass,
   FileSearch,
   GitBranch,
   HeartPulse,
@@ -213,8 +214,11 @@ function BuilderHome() {
           <button onClick={() => setModal('consultant')} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline">
             <Lightbulb className="h-3.5 w-3.5" /> Not sure what to build? Ask the AI Consultant
           </button>
-          <button onClick={demo} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline">
-            Short on time? Open a finished demo project <ArrowRight className="h-3.5 w-3.5" />
+          <Link href="/tour" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline">
+            <Compass className="h-3.5 w-3.5" /> New here? Take the 3-minute guided tour
+          </Link>
+          <button onClick={demo} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink2 hover:text-ink hover:underline">
+            Open a finished example <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
         <StudioAgentsModal key={modal === 'studio' ? 'open' : 'closed'} open={modal === 'studio'} onClose={() => setModal(null)} selected={studio} onSave={setStudio} />
@@ -249,6 +253,7 @@ function BuilderHome() {
       </div>
 
       <aside className="flex flex-col gap-4">
+        <TourPromo />
         <NeedsYou projects={projects} ws={ws} now={now} />
         <Card className="text-[13px] leading-relaxed text-ink2">
           <div className="text-[12px] font-semibold uppercase tracking-wide text-ink3">Credits</div>
@@ -257,6 +262,53 @@ function BuilderHome() {
         </Card>
       </aside>
     </main>
+  );
+}
+
+/** A first-visit card: the whole loop, with the guided tour one click away. */
+function TourPromo() {
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return typeof window !== 'undefined' && window.localStorage.getItem('arch_tour_promo') === 'hidden';
+    } catch {
+      return false;
+    }
+  });
+  if (hidden) return null;
+  return (
+    <Card className="relative border-accent-line bg-accent-soft/50">
+      <button
+        aria-label="Hide this"
+        onClick={() => {
+          setHidden(true);
+          try {
+            window.localStorage.setItem('arch_tour_promo', 'hidden');
+          } catch {
+            /* private mode: hide for this visit only */
+          }
+        }}
+        className="absolute right-2.5 top-2.5 rounded-md p-1 text-ink3 hover:bg-surface hover:text-ink"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+      <div className="flex items-center gap-2 text-[13px] font-semibold text-accent-ink">
+        <Compass className="h-4 w-4" /> New to Architect 2.0?
+      </div>
+      <p className="mt-1.5 text-[13px] leading-relaxed text-ink2">
+        Watch one app go from a sentence to real users in 3 minutes: built by Arjun, checked by Meera, approved by Farah.
+      </p>
+      <ol className="mt-2.5 flex flex-wrap items-center gap-1 text-[12px] font-medium text-ink">
+        {['Build', 'Prove', 'Sign off', 'Ship', 'Learn'].map((s, i) => (
+          <li key={s} className="flex items-center gap-1">
+            <span className="rounded-md border border-line bg-surface px-1.5 py-0.5">{s}</span>
+            {i < 4 && <span className="text-ink3">→</span>}
+          </li>
+        ))}
+      </ol>
+      <Button className="mt-3" size="sm" variant="primary" href="/tour" icon={<ArrowRight className="h-3.5 w-3.5" />}>
+        Take the guided tour
+      </Button>
+    </Card>
   );
 }
 
@@ -347,7 +399,7 @@ function NeedsYou({ projects, ws, now }: { projects: Project[]; ws: Workspace; n
         title: `${flags.length} live answer${flags.length > 1 ? 's were' : ' was'} flagged`,
         body: `${p.name}. Claims handlers think the assistant got ${flags.length > 1 ? 'them' : 'it'} wrong.`,
         href: `/p/${p.id}?tab=live`,
-        cta: 'Open Live view',
+        cta: 'Open Learn',
       });
     const decided = [...p.requests].reverse().find((r) => r.decision && r.decision.by === 'Farah');
     if (decided && APPROVED.includes(decided.status) && decided.version === p.version && p.deployments[decided.env].version !== p.version)
@@ -356,7 +408,7 @@ function NeedsYou({ projects, ws, now }: { projects: Project[]; ws: Workspace; n
         icon: <ShieldCheck className="h-4 w-4 text-ok" />,
         title: `Farah approved v${decided.version} for ${ENV_LABEL[decided.env]}`,
         body: decided.decision?.conditions.length ? `Conditions: ${decided.decision.conditions.join('; ')}.` : `${p.name} is ready to deploy.`,
-        href: `/p/${p.id}?tab=launch`,
+        href: `/p/${p.id}?tab=ship`,
         cta: 'Deploy it',
       });
     if (decided && (decided.status === 'changes' || decided.status === 'rejected') && decided.version === p.version)
@@ -365,7 +417,7 @@ function NeedsYou({ projects, ws, now }: { projects: Project[]; ws: Workspace; n
         icon: <MessageSquareText className="h-4 w-4 text-warn" />,
         title: decided.status === 'changes' ? 'Farah asked for changes' : 'Farah rejected the launch',
         body: decided.decision?.comment ? `“${decided.decision.comment}”` : p.name,
-        href: `/p/${p.id}?tab=launch`,
+        href: `/p/${p.id}?tab=signoff`,
         cta: 'See the decision',
       });
     const run = latestRun(p);
@@ -376,7 +428,7 @@ function NeedsYou({ projects, ws, now }: { projects: Project[]; ws: Workspace; n
         title: `${run.total - run.passed} failing example${run.total - run.passed > 1 ? 's' : ''} to fix`,
         body: `${p.name}. Meera’s corrections are now tests.`,
         href: `/p/${p.id}?tab=proof`,
-        cta: 'Open Proof',
+        cta: 'Open Prove',
       });
   }
   return (
@@ -604,7 +656,7 @@ function ApproverHome() {
                 return (
                   <tr key={p.id} className="border-b border-line">
                     <td className="px-4 py-2.5 font-semibold">
-                      <Link href={`/p/${p.id}?tab=launch`} className="hover:underline">
+                      <Link href={`/p/${p.id}?tab=ship`} className="hover:underline">
                         {p.name}
                       </Link>
                     </td>

@@ -1,9 +1,8 @@
 'use client';
 
-import { Check, CircleDot, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import type { AnswerKeyItem, Env, Risk, TraceStep, Verdict } from '@/lib/types';
 import { ACTION_SHORT, AGENT_NAME, RISK_LABEL } from '@/lib/engine';
-import type { PathStep } from '@/lib/stage';
 import { cn } from '@/lib/utils';
 import { Chip } from './ui';
 
@@ -85,35 +84,6 @@ export function EnvPill({ env, version }: { env: Env; version?: number | null })
       {env}
       {version ? <span className="font-mono normal-case opacity-80">v{version}</span> : null}
     </span>
-  );
-}
-
-export function LaunchPathBar({ steps, hint, right }: { steps: PathStep[]; hint?: string; right?: React.ReactNode }) {
-  return (
-    <div className="flex min-h-[46px] shrink-0 flex-wrap items-center gap-x-4 gap-y-1 border-b border-line bg-surface2 px-5 py-1.5">
-      <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink3">Launch path</span>
-      <ol className="flex flex-wrap items-center gap-1">
-        {steps.map((s, i) => (
-          <li key={s.key} className="flex items-center gap-1">
-            <span
-              className={cn(
-                'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[12.5px]',
-                s.state === 'done' && 'border-ok-line bg-ok-soft text-ok',
-                s.state === 'current' && 'border-accent bg-surface font-semibold text-accent-ink shadow-ring',
-                s.state === 'todo' && 'border-line bg-transparent text-ink3',
-              )}
-            >
-              {s.state === 'done' ? <Check className="h-3.5 w-3.5" strokeWidth={2.6} /> : s.state === 'current' ? <CircleDot className="h-3.5 w-3.5" /> : null}
-              {s.label}
-              {s.sub && <span className={cn('font-normal', s.state === 'done' ? 'text-ok' : s.state === 'current' ? 'text-accent-ink' : 'text-ink3')}>· {s.sub}</span>}
-            </span>
-            {i < steps.length - 1 && <span className="px-0.5 text-ink3">→</span>}
-          </li>
-        ))}
-      </ol>
-      {hint && <span className="hidden min-w-0 flex-1 truncate text-[12.5px] text-ink2 xl:block">{hint}</span>}
-      {right}
-    </div>
   );
 }
 

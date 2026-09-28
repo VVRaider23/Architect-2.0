@@ -5,11 +5,13 @@ import { FileUp, Play, Plus } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useUI } from '@/lib/ui';
 import { ACTION_LABEL, KIND_LABEL, RISK_LABEL, creditsForRun, graderAgreement, latestRun, money } from '@/lib/engine';
+import type { PathStep } from '@/lib/stage';
 import type { Action, AnswerKeyItem, ClaimKind, Project, Risk } from '@/lib/types';
 import { MatchMark, RunSpark, sourceLabel } from '@/components/domain';
 import { Button, Card, Chip, Empty, Modal, SectionLabel, inputCls, textareaCls } from '@/components/ui';
 import { cn, timeAgo } from '@/lib/utils';
 import { AGENT_NAME, agentScores } from '@/lib/engine';
+import { StepHeader } from './journey';
 
 /** Which change fixed an example, if any: the run right after its last failure was triggered by "Change #n". */
 function fixedBy(p: Project, itemId: string): number | null {
@@ -32,7 +34,7 @@ export function claimFacts(it: AnswerKeyItem) {
   return bits.join(' · ');
 }
 
-export function ProofTab({ p }: { p: Project }) {
+export function ProofTab({ p, state }: { p: Project; state?: PathStep['state'] }) {
   const runProof = useApp((s) => s.runProof);
   const viewAs = useApp((s) => s.viewAs);
   const filter = useUI((s) => s.proofFilter);
@@ -49,9 +51,10 @@ export function ProofTab({ p }: { p: Project }) {
 
   if (!run) {
     return (
-      <div className="p-8">
+      <div className="grid gap-5 p-5">
+        <StepHeader step="prove" state={state} />
         <Empty
-          title="No proof runs yet"
+          title="No test runs yet"
           body="When the build finishes, Architect runs every example in the Answer Key through the agents and shows which answers match."
         />
       </div>
@@ -66,63 +69,85 @@ export function ProofTab({ p }: { p: Project }) {
   const agree = graderAgreement(p);
   const lastReview = p.reviews.reduce((m, r) => Math.max(m, r.at), 0);
   const scores = agentScores(p);
-  const history = p.runs.slice(-4).map((r) => `${r.passed}/${r.total}`);
+  const weakest = (['intake_reader', 'policy_checker', 'risk_scorer', 'reply_drafter'] as const).filter((a) => scores[a].pass < scores[a].total);
+  const kinds = [...new Set(failing.map((r) => KIND_LABEL[r.it.claim.kind].toLowerCase()))];
   const canEdit = viewAs !== 'approver';
+  const allPass = run.passed === run.total;
+  const pct = Math.round((run.passed / run.total) * 100);
 
   return (
     <div className="grid gap-5 p-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <div className="text-[12px] text-ink2">
-            Latest run #{run.n} · {timeAgo(run.at)}
-          </div>
-          <div className={cn('mt-0.5 text-[26px] font-semibold tracking-tight', run.passed === run.total ? 'text-ok' : 'text-ink')}>
-            {run.passed} / {run.total}
-          </div>
-          <div className={cn('text-[12.5px]', run.passed === run.total ? 'text-ok' : 'text-bad')}>
-            {run.passed === run.total ? '✓ all match the Answer Key' : `${run.total - run.passed} miss${run.total - run.passed > 1 ? 'es' : ''}`}
-          </div>
-        </Card>
-        <Card>
-          <div className="text-[12px] text-ink2">High-risk examples</div>
-          <div className={cn('mt-0.5 text-[26px] font-semibold tracking-tight', highPass === high.length ? 'text-ok' : 'text-bad')}>
-            {highPass} / {high.length}
-          </div>
-          <div className="text-[12.5px] text-ink2">{lastReview ? `checked by Meera ${timeAgo(lastReview)}` : 'not yet checked by an expert'}</div>
-        </Card>
-        <Card>
-          <div className="text-[12px] text-ink2">Grader agrees with Meera</div>
-          <div className="mt-0.5 text-[26px] font-semibold tracking-tight">{agree.pct === null ? '—' : `${agree.pct}%`}</div>
-          <div className="text-[12.5px] text-ink2">{agree.pct === null ? 'shown after Meera reviews answers' : `on her ${agree.n} reviews`}</div>
-        </Card>
-        <Card>
-          <div className="text-[12px] text-ink2">Run history</div>
-          <div className="mt-1.5">
-            <RunSpark runs={p.runs} />
-          </div>
-          <div className="mt-1 font-mono text-[11.5px] text-ink2">{history.join(' → ')}</div>
-        </Card>
-      </div>
+      <StepHeader step="prove" state={state} />
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl border border-line bg-surface px-4 py-2.5 text-[12.5px]">
-        <span className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink3">By agent</span>
-        {(['intake_reader', 'policy_checker', 'risk_scorer', 'reply_drafter'] as const).map((a) => {
-          const s = scores[a];
-          const ok = s.pass === s.total;
-          return (
-            <span key={a} className={cn(ok ? 'text-ink2' : 'font-semibold text-bad')}>
-              {AGENT_NAME[a]} {s.pass}/{s.total} {ok ? '' : '✗'}
+      <Card className="grid gap-5 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="min-w-0">
+          <div className="text-[12.5px] text-ink2">
+            Latest test run #{run.n} · {timeAgo(run.at)}
+          </div>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-2.5">
+            <span className={cn('text-[30px] font-semibold tracking-tight', allPass ? 'text-ok' : 'text-ink')}>
+              {run.passed} of {run.total}
             </span>
-          );
-        })}
-      </div>
+            <span className="text-[14px] text-ink2">answers match what the expert expects</span>
+          </div>
+          <div className="mt-2 h-2 max-w-[520px] overflow-hidden rounded-full bg-bad-soft">
+            <div className={cn('h-full rounded-full', allPass ? 'bg-ok' : 'bg-accent')} style={{ width: `${pct}%` }} />
+          </div>
+          <p className={cn('mt-2.5 text-[13.5px]', allPass ? 'text-ok' : 'text-ink')}>
+            {allPass ? (
+              'Every example gets the right answer.'
+            ) : (
+              <>
+                <b className="text-bad">
+                  {failing.length} wrong answer{failing.length === 1 ? '' : 's'}
+                </b>
+                {kinds.length ? `, all ${kinds.length === 1 ? kinds[0] : kinds.join(' and ')} claims` : ''}
+                {weakest.length ? `. The problem is in the ${weakest.map((a) => AGENT_NAME[a]).join(' and ')}.` : '.'}{' '}
+                {failing.length > 0 && (
+                  <button onClick={() => setFilter('failing')} className="font-medium text-accent hover:underline">
+                    Show them
+                  </button>
+                )}
+              </>
+            )}
+          </p>
+        </div>
+        <dl className="grid content-start gap-2.5 text-[12.5px] md:min-w-[250px] md:border-l md:border-line md:pl-5">
+          <div>
+            <dt className="text-ink2">High-risk examples</dt>
+            <dd className={cn('font-semibold', highPass === high.length ? 'text-ok' : 'text-bad')}>
+              {highPass} of {high.length} right
+            </dd>
+          </div>
+          <div>
+            <dt className="text-ink2">Checked by an expert</dt>
+            <dd className="font-semibold">{lastReview ? `Meera, ${timeAgo(lastReview)}` : 'Not yet'}</dd>
+          </div>
+          {agree.pct !== null && (
+            <div>
+              <dt className="text-ink2">Auto-check agrees with Meera</dt>
+              <dd className="font-semibold">
+                {agree.pct}% <span className="font-normal text-ink2">of {agree.n} answers</span>
+              </dd>
+            </div>
+          )}
+          {p.runs.length > 1 && (
+            <div>
+              <dt className="text-ink2">Every run so far</dt>
+              <dd className="mt-1">
+                <RunSpark runs={p.runs} height={26} />
+              </dd>
+            </div>
+          )}
+        </dl>
+      </Card>
 
-      <Card pad={false}>
+      <Card pad={false} tour="answer-key">
         <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-semibold">Answer Key</div>
             <div className="text-[12.5px] text-ink2">
-              {p.answerKey.length} examples · owned by Meera · every proof run checks all of them
+              {p.answerKey.length} example claims with the answer the expert expects. Owned by Meera. Click a row to replay what the agents did.
             </div>
           </div>
           {canEdit && (
@@ -137,7 +162,7 @@ export function ProofTab({ p }: { p: Project }) {
           )}
           {viewAs === 'builder' && (
             <Button size="sm" variant="primary" icon={<Play className="h-3.5 w-3.5" />} onClick={() => runProof(p.id, 'Run from Proof')}>
-              Run proof · ≈ {creditsForRun(p.answerKey.length)} credits
+              Run all tests · ≈ {creditsForRun(p.answerKey.length)} credits
             </Button>
           )}
         </div>
@@ -244,7 +269,7 @@ function AddExampleModal({ p, open, onClose }: { p: Project; open: boolean; onCl
       open={open}
       onClose={onClose}
       title="Add an example"
-      description="Add the cases you worry about. Every proof run checks them from now on."
+      description="Add the cases you worry about. Every test run checks them from now on."
       width={600}
       footer={
         <>
@@ -360,7 +385,7 @@ function CsvModal({ p, open, onClose }: { p: Project; open: boolean; onClose: ()
             variant="primary"
             onClick={() => {
               const n = importCsv(p.id, text);
-              toast(n ? `Imported ${n} example${n > 1 ? 's' : ''}. Run proof to test them.` : 'No valid rows found. Check the column values.', n ? 'ok' : 'bad');
+              toast(n ? `Imported ${n} example${n > 1 ? 's' : ''}. Run the tests to check them.` : 'No valid rows found. Check the column values.', n ? 'ok' : 'bad');
               if (n) onClose();
             }}
           >

@@ -8,10 +8,9 @@ import { useApp, BUILD_STEPS, STEP_MS } from '@/lib/store';
 import { useNow } from '@/lib/hooks';
 import { useUI } from '@/lib/ui';
 import { latestRun } from '@/lib/engine';
-import { arrivedFlags, launchPath, nextAction, openTasks, pathHint, pendingRequest, stageLabel } from '@/lib/stage';
+import { BUILD_TABS, STEP_OF, TABS_FOR, arrivedFlags, launchPath, nextAction, openTasks, pathHint, pendingRequest, type StepKey } from '@/lib/stage';
 import type { Project, Role, Tab } from '@/lib/types';
 import { Logo, SaveBadge, UserMenu, ViewAsSwitch } from '@/components/shell';
-import { LaunchPathBar } from '@/components/domain';
 import { Button, Chip } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { ChatPanel } from './chat';
@@ -20,32 +19,26 @@ import { PreviewTab } from './preview-tab';
 import { AgentsTab } from './agents-tab';
 import { CodeTab } from './code-tab';
 import { ProofTab } from './proof-tab';
-import { LaunchTab } from './launch-tab';
+import { ShipTab, SignoffTab } from './launch-tab';
 import { LiveTab } from './live-tab';
 import { InviteModal, ReplayDrawer, SignoffModal } from './overlays';
-
-const TABS: Record<Role, Tab[]> = {
-  builder: ['plan', 'preview', 'agents', 'code', 'proof', 'launch', 'live'],
-  reviewer: ['preview', 'proof', 'live'],
-  approver: ['plan', 'agents', 'proof', 'launch', 'live'],
-};
-
-const TAB_LABEL: Record<Tab, string> = {
-  plan: 'Plan',
-  preview: 'Preview',
-  agents: 'Agents',
-  code: 'Code',
-  proof: 'Proof',
-  launch: 'Launch',
-  live: 'Live',
-};
+import { BuildSubnav, JourneyBar } from './journey';
 
 function defaultTab(p: Project, role: Role): Tab {
   if (role === 'reviewer') return 'preview';
-  if (role === 'approver') return pendingRequest(p) ? 'launch' : 'proof';
+  if (role === 'approver') return pendingRequest(p) ? 'signoff' : 'proof';
   if (!p.planApproved) return 'plan';
   if (p.build.status !== 'done') return 'preview';
   return 'proof';
+}
+
+/** The screen a step opens: the step's own screen, or for Build the most useful Build screen. */
+function tabForStep(step: StepKey, p: Project, role: Role, current: Tab): Tab {
+  const allowed = TABS_FOR[role];
+  if (step !== 'build') return (Object.keys(STEP_OF) as Tab[]).find((t) => STEP_OF[t] === step)!;
+  if (STEP_OF[current] === 'build') return current;
+  const preferred: Tab = p.build.status === 'done' || p.planApproved ? 'preview' : 'plan';
+  return allowed.includes(preferred) ? preferred : BUILD_TABS.find((t) => allowed.includes(t)) ?? 'proof';
 }
 
 export function ProjectWorkspace({ p, initialTab }: { p: Project; initialTab?: Tab }) {
@@ -61,9 +54,15 @@ export function ProjectWorkspace({ p, initialTab }: { p: Project; initialTab?: T
   // Bind the screen state to this project once.
   const bound = useUI((s) => s.projectId === p.id);
   useEffect(() => {
-    bind(p.id, initialTab && TABS[viewAs].includes(initialTab) ? initialTab : defaultTab(p, viewAs));
+    bind(p.id, initialTab && TABS_FOR[viewAs].includes(initialTab) ? initialTab : defaultTab(p, viewAs));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p.id]);
+
+  // A link to a specific screen (?tab=…) wins, even when this project is already open.
+  useEffect(() => {
+    if (bound && initialTab && TABS_FOR[viewAs].includes(initialTab)) setTab(initialTab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab, bound]);
 
   // Finish the build when its time is up.
   useEffect(() => {
@@ -98,67 +97,37 @@ export function ProjectWorkspace({ p, initialTab }: { p: Project; initialTab?: T
 
   // Keep the tab valid for the current role.
   useEffect(() => {
-    if (bound && !TABS[viewAs].includes(tab)) setTab(defaultTab(p, viewAs));
+    if (bound && !TABS_FOR[viewAs].includes(tab)) setTab(defaultTab(p, viewAs));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewAs, bound]);
 
   const run = latestRun(p);
-  const flags = arrivedFlags(p, now).filter((f) => f.status === 'open').length;
-  const pending = pendingRequest(p);
-  const tabs = TABS[viewAs];
-
-  const badge = (t: Tab) => {
-    if (t === 'proof' && run) return `${run.passed}/${run.total}`;
-    if (t === 'live' && flags) return String(flags);
-    if (t === 'launch' && pending) return '1';
-    return null;
-  };
+  const allowed = TABS_FOR[viewAs];
+  const steps = launchPath(p, ws, now);
+  const stepState = (k: StepKey) => steps.find((s) => s.key === k)?.state;
 
   return (
     <div className="flex h-screen min-h-0 flex-col">
       <TopBar p={p} now={now} />
-      <LaunchPathBar
-        steps={launchPath(p, ws, now)}
+      <JourneyBar
+        steps={steps}
+        tab={tab}
+        allowed={allowed}
+        failing={!!run && run.passed < run.total}
         hint={viewAs === 'builder' ? pathHint(p, ws, now) : undefined}
+        onGo={(step) => setTab(tabForStep(step, p, viewAs, tab))}
       />
       <div className="flex min-h-0 flex-1">
         {viewAs === 'builder' && <ChatPanel p={p} />}
         <main className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-11 shrink-0 items-end gap-1 overflow-x-auto border-b border-line bg-surface px-3" role="tablist" aria-label="Project views">
-            {viewAs === 'builder' && (
-              <button className="mb-1.5 mr-1 flex h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-[12.5px] lg:hidden" onClick={() => setChatOpen(true)}>
-                <MessageSquare className="h-3.5 w-3.5" /> Chat
+          {viewAs === 'builder' && (
+            <div className="flex h-10 shrink-0 items-center border-b border-line bg-surface px-3 lg:hidden">
+              <button className="flex h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-[12.5px]" onClick={() => setChatOpen(true)}>
+                <MessageSquare className="h-3.5 w-3.5" /> Chat with Architect
               </button>
-            )}
-            {tabs.map((t) => {
-              const b = badge(t);
-              const on = tab === t;
-              return (
-                <button
-                  key={t}
-                  role="tab"
-                  aria-selected={on}
-                  onClick={() => setTab(t)}
-                  className={cn(
-                    'flex h-11 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-[13.5px]',
-                    on ? 'border-accent font-semibold text-ink' : 'border-transparent text-ink2 hover:text-ink',
-                  )}
-                >
-                  {TAB_LABEL[t]}
-                  {b && (
-                    <span
-                      className={cn(
-                        'rounded-full px-1.5 py-[1px] font-mono text-[10.5px]',
-                        t === 'proof' && run && run.passed < run.total ? 'bg-bad-soft text-bad' : t === 'live' ? 'bg-bad-soft text-bad' : t === 'launch' ? 'bg-warn-soft text-warn' : 'bg-ok-soft text-ok',
-                      )}
-                    >
-                      {b}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+            </div>
+          )}
+          {STEP_OF[tab] === 'build' && <BuildSubnav tab={tab} allowed={allowed} onTab={setTab} />}
           <div className={cn('scroll-thin min-h-0 flex-1', tab === 'code' || tab === 'preview' ? 'overflow-hidden' : 'overflow-y-auto')} role="tabpanel">
             {bound && (
               <>
@@ -166,9 +135,10 @@ export function ProjectWorkspace({ p, initialTab }: { p: Project; initialTab?: T
                 {tab === 'preview' && <PreviewTab p={p} />}
                 {tab === 'agents' && <AgentsTab p={p} />}
                 {tab === 'code' && <CodeTab p={p} />}
-                {tab === 'proof' && <ProofTab p={p} />}
-                {tab === 'launch' && <LaunchTab p={p} />}
-                {tab === 'live' && <LiveTab p={p} />}
+                {tab === 'proof' && <ProofTab p={p} state={stepState('prove')} />}
+                {tab === 'signoff' && <SignoffTab p={p} state={stepState('signoff')} />}
+                {tab === 'ship' && <ShipTab p={p} state={stepState('ship')} />}
+                {tab === 'live' && <LiveTab p={p} state={stepState('learn')} />}
               </>
             )}
           </div>
@@ -231,7 +201,7 @@ function TopBar({ p, now }: { p: Project; now: number }) {
       case 'request':
         return openSignoff(action.env);
       case 'deploy':
-        if (deploy(p.id, action.env)) setTab('launch');
+        if (deploy(p.id, action.env)) setTab('ship');
         return;
       case 'open_live':
         window.open(`/apps/${p.id}?env=live`, '_blank');
@@ -250,11 +220,8 @@ function TopBar({ p, now }: { p: Project; now: number }) {
         </Link>
         <span className="text-ink3">/</span>
         <span className="truncate font-semibold">{p.name}</span>
-        <Chip tone="outline" className="font-mono">
+        <Chip tone="outline" className="font-mono" title={`Version ${p.version}. Every change makes a new version.`}>
           v{p.version}
-        </Chip>
-        <Chip tone={p.deployments.live.status === 'running' ? 'ok' : pending ? 'warn' : 'accent'} className="hidden lg:inline-flex">
-          {stageLabel(p, now)}
         </Chip>
       </nav>
       <div className="flex-1" />
@@ -264,15 +231,17 @@ function TopBar({ p, now }: { p: Project; now: number }) {
           <Button size="sm" variant="ghost" icon={<UserPlus className="h-3.5 w-3.5" />} onClick={() => setInviteOpen(p.id)} className="hidden sm:inline-flex">
             Invite
           </Button>
-          <Button
-            size="sm"
-            variant={secondary ? 'secondary' : 'primary'}
-            onClick={main}
-            icon={action.kind === 'waiting_review' || action.kind === 'waiting_decision' ? <Eye className="h-3.5 w-3.5" /> : action.kind === 'open_live' ? <ExternalLink className="h-3.5 w-3.5" /> : undefined}
-            title={action.kind === 'waiting_review' ? 'See it as Meera (demo switch)' : action.kind === 'waiting_decision' ? 'See it as Farah (demo switch)' : undefined}
-          >
-            {action.label}
-          </Button>
+          <span data-tour="next-action" className="rounded-lg">
+            <Button
+              size="sm"
+              variant={secondary ? 'secondary' : 'primary'}
+              onClick={main}
+              icon={action.kind === 'waiting_review' || action.kind === 'waiting_decision' ? <Eye className="h-3.5 w-3.5" /> : action.kind === 'open_live' ? <ExternalLink className="h-3.5 w-3.5" /> : undefined}
+              title={action.kind === 'waiting_review' ? 'See it as Meera (demo switch)' : action.kind === 'waiting_decision' ? 'See it as Farah (demo switch)' : undefined}
+            >
+              {action.label}
+            </Button>
+          </span>
         </>
       )}
       {viewAs === 'reviewer' && (

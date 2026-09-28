@@ -432,7 +432,7 @@ function Usage() {
           <div className="text-[12px] text-ink2">{builds * 140} credits</div>
         </Card>
         <Card>
-          <div className="text-[12px] text-ink2">Proof runs and changes</div>
+          <div className="text-[12px] text-ink2">Test runs and changes</div>
           <div className="mt-0.5 text-[26px] font-semibold">
             {runs} · {changes}
           </div>

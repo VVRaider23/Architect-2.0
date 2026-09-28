@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, ChevronDown, CloudCheck, CloudOff, Loader2, LogOut, RotateCcw } from 'lucide-react';
+import { Check, ChevronDown, CloudCheck, CloudOff, Compass, Loader2, LogOut, RotateCcw } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
 import { PEOPLE } from '@/lib/seed';
@@ -58,9 +58,10 @@ export function ViewAsSwitch({ onSwitch }: { onSwitch?: (role: Role) => void }) 
   useClickOutside(ref, () => setOpen(false));
   const me = PEOPLE.find((p) => p.role === viewAs)!;
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" data-tour="person-switch">
       <button
         onClick={() => setOpen((o) => !o)}
+        title="Demo switch: see the project as Arjun, Meera or Farah"
         className="flex h-9 items-center gap-2 rounded-lg border border-line bg-surface2 pl-1.5 pr-2.5 text-[12.5px] text-ink hover:border-line2"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -130,6 +131,9 @@ export function UserMenu() {
             <div className="text-[12px] text-ink2">{viewAs === 'builder' ? email || me.email : `${me.email} · demo view`}</div>
             <div className="mt-1 text-[11.5px] text-ink3">{authMode === 'demo' ? 'Demo sign-in · saved in this browser' : 'Your account · saved to the database'}</div>
           </div>
+          <Link href="/tour" onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-sunken">
+            <Compass className="h-4 w-4 text-ink2" /> Take the guided tour
+          </Link>
           <button
             onClick={() => {
               if (authMode === 'account') {

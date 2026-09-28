@@ -307,7 +307,7 @@ function PlanCard({ p, focusInput }: { p: Project; focusInput: () => void }) {
         <>
           <div className="mt-3 rounded-lg bg-surface2 px-3 py-2 text-[12.5px] text-ink2">
             <div className="font-mono text-[10.5px] uppercase tracking-wider text-ink3">Cost before you commit</div>
-            Build ≈ <b className="text-ink">140 credits</b> · each proof run ≈ <b className="text-ink">{creditsForRun(15)} credits</b> · you have {credits.toLocaleString('en-US')}.
+            Build ≈ <b className="text-ink">140 credits</b> · each test run ≈ <b className="text-ink">{creditsForRun(15)} credits</b> · you have {credits.toLocaleString('en-US')}.
           </div>
           <div className="mt-3 flex gap-2">
             <Button size="sm" variant="primary" onClick={() => approvePlan(p.id)}>
@@ -417,7 +417,7 @@ function RunCard({ p, runId }: { p: Project; runId: string }) {
     <CardBox>
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10.5px] uppercase tracking-wider text-ink3">
-          Proof run #{run.n} · {run.trigger}
+          Test run #{run.n} · {run.trigger}
         </span>
         <span className="font-mono text-[11px] text-ink3">v{run.version}</span>
       </div>

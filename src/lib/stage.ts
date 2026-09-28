@@ -1,8 +1,68 @@
-import type { Env, LaunchRequest, LiveFlag, Project, RequestStatus, RuleCheck, Workspace } from './types';
+import type { Env, LaunchRequest, LiveFlag, Project, RequestStatus, Role, RuleCheck, Tab, Workspace } from './types';
 import { checkRules, latestRun } from './engine';
 import { BUILD_STEPS, STEP_MS } from './store';
 
 export const APPROVED: RequestStatus[] = ['approved', 'approved_conditions', 'fast_lane'];
+
+/* ---------- The journey: five steps, and the screens inside each ---------- */
+
+export type StepKey = 'build' | 'prove' | 'signoff' | 'ship' | 'learn';
+export const STEP_KEYS: StepKey[] = ['build', 'prove', 'signoff', 'ship', 'learn'];
+
+/** Which step each screen belongs to. */
+export const STEP_OF: Record<Tab, StepKey> = {
+  plan: 'build',
+  agents: 'build',
+  preview: 'build',
+  code: 'build',
+  proof: 'prove',
+  signoff: 'signoff',
+  ship: 'ship',
+  live: 'learn',
+};
+
+/** The screens inside Build, in Architect's order: Plan → Agents → App → Code. */
+export const BUILD_TABS: Tab[] = ['plan', 'agents', 'preview', 'code'];
+
+export const TAB_LABEL: Record<Tab, string> = {
+  plan: 'Plan',
+  agents: 'Agents',
+  preview: 'App',
+  code: 'Code',
+  proof: 'Prove',
+  signoff: 'Sign off',
+  ship: 'Ship',
+  live: 'Learn',
+};
+
+/** One line under the Build screens, in plain words. */
+export const BUILD_TAB_HINT: Partial<Record<Tab, string>> = {
+  plan: 'The one-page plan (PRD). Nothing is built until you approve it.',
+  agents: 'The AI workers inside your app, and what each one is allowed to do.',
+  preview: 'Your app, running. Test mode runs every example through it.',
+  code: 'The real code, in the framework you chose. Download it or push it to GitHub.',
+};
+
+/** Which screens each person sees. Everyone sees the whole journey; Build is trimmed to what they need. */
+export const TABS_FOR: Record<Role, Tab[]> = {
+  builder: ['plan', 'agents', 'preview', 'code', 'proof', 'signoff', 'ship', 'live'],
+  reviewer: ['preview', 'proof', 'signoff', 'ship', 'live'],
+  approver: ['plan', 'agents', 'proof', 'signoff', 'ship', 'live'],
+};
+
+/** Old links used ?tab=launch. Send them to the step that matters now. */
+export function resolveTab(raw: string | null | undefined, p: Project): Tab | undefined {
+  if (!raw) return undefined;
+  if (raw === 'launch') return pendingRequest(p) || !p.requests.length ? 'signoff' : 'ship';
+  return (Object.keys(STEP_OF) as Tab[]).includes(raw as Tab) ? (raw as Tab) : undefined;
+}
+
+/** Who a pilot or launch is for, and the conditions Farah usually sets. */
+export const AUDIENCES = ['Claims team (12 people)', 'All claims handlers (40 people)', 'Everyone at Harborline'];
+export const CONDITIONS = {
+  test: ['Only the claims team (12 people)', 'Review again in 30 days', 'Pause if the match drops below 95%'],
+  live: ['Weekly expert spot checks', 'Review again in 30 days', 'Pause if the match drops below 95%'],
+};
 
 export const STATUS_LABEL: Record<RequestStatus, string> = {
   pending: 'Waiting for decision',
@@ -162,24 +222,93 @@ export function nextAction(p: Project, ws: Workspace | null, now: number): NextA
   return { kind: 'request', label: 'Request sign-off', env: 'test' };
 }
 
-/** A plain-words hint shown under the launch path. */
+/** What happens next, in plain words. Always matches the main button. */
 export function pathHint(p: Project, ws: Workspace | null, now: number): string {
-  if (!p.plan) return 'Answer three questions and Architect drafts a one-page plan.';
-  if (!p.planApproved) return 'Nothing is built until you approve the plan.';
-  if (p.build.status !== 'done') return 'Building. The first proof run starts as soon as the agents are ready.';
-  const { checks, pass } = rulesFor(p, ws, now);
-  const pending = pendingRequest(p);
-  if (pending) return `Farah has the Launch Pack for v${pending.version} → ${pending.env === 'test' ? 'Test' : 'Live'}.`;
-  const failing = checks.filter((c) => !c.pass);
-  if (!pass && failing.length) return `Sign-off opens when every launch rule passes. Still to go: ${failing.map((c) => SHORT_RULE[c.id] ?? c.label.toLowerCase()).join(', ')}.`;
-  const testCurrent = p.deployments.test.status === 'running' && p.deployments.test.version === p.version;
-  const liveCurrent = p.deployments.live.status === 'running' && p.deployments.live.version === p.version;
-  if (liveCurrent) return 'Live. Flagged answers come back here and become tests.';
-  if (approvedFor(p, 'live')) return `Farah approved Live. Deploy v${p.version} when you are ready.`;
-  if (approvedFor(p, 'test') && !testCurrent) return `Approved. Deploy v${p.version} to Test when you are ready.`;
-  if (testCurrent) return `v${p.version} is piloting on Test. Request Live approval when the pilot looks good.`;
-  return 'Every launch rule passes. Request sign-off when you are ready.';
+  const a = nextAction(p, ws, now);
+  switch (a.kind) {
+    case 'draft_plan':
+      return 'Answer three quick questions in the chat, then Architect drafts a one-page plan.';
+    case 'approve_plan':
+      return 'Check the plan. Nothing is built until you approve it.';
+    case 'skip_build':
+      return 'Architect is building the agents, the app and the code, then tests them.';
+    case 'waiting_decision': {
+      const r = pendingRequest(p);
+      return `Farah (IT) is checking the Launch Pack for v${r?.version ?? p.version} → ${r?.env === 'live' ? 'Live' : 'Test'}.`;
+    }
+    case 'flags':
+      return 'People flagged answers they think are wrong. Send them to Meera to check.';
+    case 'waiting_review':
+      return 'Meera is checking the answers. Each correction she makes becomes a new test.';
+    case 'invite':
+      return 'Only an expert can say if an answer is right. Invite Meera to check them.';
+    case 'fix': {
+      const run = latestRun(p);
+      const n = run ? run.total - run.passed : 0;
+      return `${n} example${n === 1 ? ' gets' : 's get'} the wrong answer. Ask Architect to fix ${n === 1 ? 'it' : 'them'}.`;
+    }
+    case 'request': {
+      const { checks, pass } = rulesFor(p, ws, now);
+      const failing = checks.filter((c) => !c.pass);
+      if (!pass && failing.length) return `Sign-off opens when every launch rule passes. Still to go: ${failing.map((c) => SHORT_RULE[c.id] ?? c.label.toLowerCase()).join(', ')}.`;
+      return a.env === 'live'
+        ? `v${p.version} is piloting on Test. Ask Farah to approve Live when the pilot looks good.`
+        : 'Every launch rule passes. Ask Farah (IT) to sign off.';
+    }
+    case 'deploy':
+      return `Farah approved it. Deploy v${p.version} to ${a.env === 'live' ? 'Live' : 'Test'} when you are ready.`;
+    case 'open_live':
+      return 'Live. When someone flags a wrong answer, it comes back here as a new test.';
+  }
 }
+
+/** Plain-language copy for each step: what happens, who does it, and what opens it. */
+export const STEP_COPY: Record<StepKey, { title: string; question: string; body: string; who: { role: Role; does: string }[]; unlocks: string }> = {
+  build: {
+    title: 'Build',
+    question: 'What should the app do?',
+    body: 'Describe the app in a sentence. Architect asks three questions, drafts a one-page plan, and builds the agents, the screens and the code once you approve it.',
+    who: [{ role: 'builder', does: 'describes and approves' }],
+    unlocks: 'Starts with your prompt.',
+  },
+  prove: {
+    title: 'Prove',
+    question: 'Are the answers right?',
+    body: 'The Answer Key is a list of example cases with the answer your expert expects. Architect runs every example through the app after each change, so you see what got better and what broke.',
+    who: [
+      { role: 'reviewer', does: 'checks answers, owns the examples' },
+      { role: 'builder', does: 'fixes what fails' },
+    ],
+    unlocks: 'Opens when the first build finishes.',
+  },
+  signoff: {
+    title: 'Sign off',
+    question: 'Is it safe to put in front of people?',
+    body: 'Before real people use the app, Farah (IT) gets a one-page Launch Pack: test results, expert checks, what data it touches and what it costs. Launch rules decide what needs her and what can go straight through.',
+    who: [
+      { role: 'approver', does: 'sets the rules and decides' },
+      { role: 'builder', does: 'requests sign-off' },
+    ],
+    unlocks: 'Opens when every launch rule passes.',
+  },
+  ship: {
+    title: 'Ship',
+    question: 'Who can use it?',
+    body: 'Deploy the approved version: first to Test, a small pilot group, then to Live for everyone. Every earlier version stays one click away.',
+    who: [{ role: 'builder', does: 'deploys and rolls back' }],
+    unlocks: 'Opens when Farah approves.',
+  },
+  learn: {
+    title: 'Learn',
+    question: 'What did people flag?',
+    body: 'People using the app can flag an answer they think is wrong. Each flag comes back here. Meera checks it, and her correction becomes a new test, so the same mistake cannot come back.',
+    who: [
+      { role: 'builder', does: 'sends flags for review' },
+      { role: 'reviewer', does: 'confirms the right answer' },
+    ],
+    unlocks: 'Opens when people start using the app.',
+  },
+};
 
 export function stageLabel(p: Project, now: number): string {
   if (!p.plan) return 'New';

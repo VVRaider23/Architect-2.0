@@ -3,7 +3,7 @@
 import { Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useProject } from '@/lib/store';
-import type { Tab } from '@/lib/types';
+import { resolveTab } from '@/lib/stage';
 import { RequireAuth } from '@/components/shell';
 import { MissingProject } from '@/components/missing';
 import { ProjectWorkspace } from '@/components/project/workspace';
@@ -23,5 +23,5 @@ function Project() {
   const search = useSearchParams();
   const p = useProject(id);
   if (!p) return <MissingProject />;
-  return <ProjectWorkspace p={p} initialTab={(search.get('tab') as Tab | null) ?? undefined} />;
+  return <ProjectWorkspace p={p} initialTab={resolveTab(search.get('tab'), p)} />;
 }

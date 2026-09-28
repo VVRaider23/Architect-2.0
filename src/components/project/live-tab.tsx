@@ -5,13 +5,14 @@ import { ArrowRight, Bell, CheckCircle2, ExternalLink, Lightbulb } from 'lucide-
 import { useApp } from '@/lib/store';
 import { useNow } from '@/lib/hooks';
 import { KIND_LABEL, money } from '@/lib/engine';
-import { arrivedFlags } from '@/lib/stage';
+import { arrivedFlags, type PathStep } from '@/lib/stage';
 import type { Project } from '@/lib/types';
 import { EnvPill, verdictShort } from '@/components/domain';
 import { Button, Card, Chip, Empty, Stat } from '@/components/ui';
 import { timeAgo } from '@/lib/utils';
+import { StepHeader } from './journey';
 
-export function LiveTab({ p }: { p: Project }) {
+export function LiveTab({ p, state }: { p: Project; state?: PathStep['state'] }) {
   const now = useNow(1000);
   const viewAs = useApp((s) => s.viewAs);
   const sendFlagToReview = useApp((s) => s.sendFlagToReview);
@@ -22,7 +23,8 @@ export function LiveTab({ p }: { p: Project }) {
 
   if (!d) {
     return (
-      <div className="p-8">
+      <div className="grid gap-5 p-5">
+        <StepHeader step="learn" state={state} />
         <Empty
           title="Nothing is running yet"
           body="Deploy to Test or Live and real usage shows up here: answers, flags from the people using the app, and cost. Flagged answers go to your expert and become tests."
@@ -42,6 +44,7 @@ export function LiveTab({ p }: { p: Project }) {
 
   return (
     <div className="grid gap-5 p-5">
+      <StepHeader step="learn" state={state} />
       <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink2">
         <EnvPill env={d.env} version={d.version} />
         <span>
@@ -72,7 +75,7 @@ export function LiveTab({ p }: { p: Project }) {
       )}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <Card pad={false}>
+        <Card pad={false} tour="flags">
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="text-[14px] font-semibold">Flagged answers</span>
             {waiting && (

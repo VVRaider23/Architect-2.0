@@ -206,7 +206,7 @@ function Review() {
               </p>
               {run && (
                 <div className="text-[13px] text-ink2">
-                  Latest proof run: <b className={run.passed === run.total ? 'text-ok' : 'text-bad'}>{run.passed} of {run.total}</b> match the Answer Key.
+                  Latest test run: <b className={run.passed === run.total ? 'text-ok' : 'text-bad'}>{run.passed} of {run.total}</b> match the Answer Key.
                 </div>
               )}
               <div className="mt-2 flex gap-2">
@@ -371,7 +371,7 @@ function ReviewCard({ p, row, index, total, onSkip }: { p: Project; row: Row; in
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-3" data-tour="review-buttons">
         <button
           onClick={() => submit('right')}
           className="flex h-12 items-center justify-center gap-2 rounded-xl border border-ok-line bg-ok-soft text-[14.5px] font-semibold text-ok hover:border-ok"

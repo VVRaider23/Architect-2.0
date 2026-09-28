@@ -35,6 +35,7 @@ export default {
         'slide-left': { from: { opacity: '0', transform: 'translateX(24px)' }, to: { opacity: '1', transform: 'translateX(0)' } },
         pulse2: { '0%,100%': { opacity: '1' }, '50%': { opacity: '0.45' } },
         caret: { '0%,100%': { opacity: '1' }, '50%': { opacity: '0' } },
+        tour: { '0%,100%': { boxShadow: '0 0 0 3px rgba(36,70,181,0.28)' }, '50%': { boxShadow: '0 0 0 9px rgba(36,70,181,0.06)' } },
       },
       animation: {
         'fade-in': 'fade-in 160ms ease-out',
@@ -42,6 +43,7 @@ export default {
         'slide-left': 'slide-left 220ms ease-out',
         pulse2: 'pulse2 1.4s ease-in-out infinite',
         caret: 'caret 1s step-end infinite',
+        tour: 'tour 1.6s ease-in-out infinite',
       },
     },
   },

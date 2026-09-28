@@ -1,7 +1,7 @@
 export type Role = 'builder' | 'reviewer' | 'approver';
 export type FrameworkId = 'lyzr' | 'langgraph' | 'crewai' | 'openai-agents' | 'google-adk';
 export type Env = 'preview' | 'test' | 'live';
-export type Tab = 'plan' | 'preview' | 'agents' | 'code' | 'proof' | 'launch' | 'live';
+export type Tab = 'plan' | 'preview' | 'agents' | 'code' | 'proof' | 'signoff' | 'ship' | 'live';
 
 export interface Person {
   id: string;
