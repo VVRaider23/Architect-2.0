@@ -101,8 +101,17 @@ function Setup() {
                   </span>
                   <div className="flex-1 text-[13.5px]">
                     Connected as <span className="font-semibold">{ghLogin ? `@${ghLogin}` : 'arjun-harborline'}</span>
-                    <div className="text-[12.5px] text-ink2">Used for imports, commits and pull requests.</div>
+                    <div className="text-[12.5px] text-ink2">
+                      {realGithub && !user?.github?.canPush
+                        ? 'Signed in only. Allow Architect to create repos so it can save your code there.'
+                        : 'Used for imports, commits and pull requests.'}
+                    </div>
                   </div>
+                  {realGithub && !user?.github?.canPush && (
+                    <Button size="sm" variant="dark" loading={github === 'connecting'} onClick={connect}>
+                      Allow code pushes
+                    </Button>
+                  )}
                   {!realGithub && (
                     <Button size="sm" variant="ghost" onClick={() => setGithub('none')}>
                       Change
