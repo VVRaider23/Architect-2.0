@@ -326,7 +326,7 @@ function AddExampleModal({ p, open, onClose }: { p: Project; open: boolean; onCl
         </div>
         {kind === 'theft' && (
           <label className="flex items-center gap-2 text-[13px]">
-            <input type="checkbox" className="h-4 w-4 accent-[#2446B5]" checked={report} onChange={(e) => setReport(e.target.checked)} /> Police report number given
+            <input type="checkbox" className="h-4 w-4 accent-accent" checked={report} onChange={(e) => setReport(e.target.checked)} /> Police report number given
           </label>
         )}
         <div className="grid grid-cols-2 gap-3 rounded-xl bg-surface2 p-3">
@@ -351,7 +351,7 @@ function AddExampleModal({ p, open, onClose }: { p: Project; open: boolean; onCl
             </select>
           </label>
           <label className="col-span-2 flex items-center gap-2 text-[13px]">
-            <input type="checkbox" className="h-4 w-4 accent-[#2446B5]" checked={highRisk} onChange={(e) => setHighRisk(e.target.checked)} /> High-risk example (must
+            <input type="checkbox" className="h-4 w-4 accent-accent" checked={highRisk} onChange={(e) => setHighRisk(e.target.checked)} /> High-risk example (must
             always pass before launch)
           </label>
         </div>

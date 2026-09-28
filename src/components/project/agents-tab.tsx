@@ -75,7 +75,7 @@ export function AgentsTab({ p }: { p: Project }) {
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setAgent(id)}
         className="cursor-pointer focus:outline-none"
       >
-        <rect x={x} y={y} width={NODE_W} height={NODE_H} rx="12" fill={on ? '#E8EDFB' : '#FFFFFF'} stroke={on ? '#2446B5' : ok ? '#CBC7BD' : '#B3261E'} strokeWidth={on ? 2 : 1.3} />
+        <rect x={x} y={y} width={NODE_W} height={NODE_H} rx="12" style={{ fill: on ? 'rgb(var(--accent-soft))' : 'rgb(var(--surface))', stroke: on ? 'rgb(var(--accent))' : ok ? 'rgb(var(--line2))' : 'rgb(var(--bad))' }} strokeWidth={on ? 2 : 1.3} />
         <text x={x + 14} y={y + 25} fontSize="13.5" fontWeight="600" fill="#1D1C1A" fontFamily="IBM Plex Sans, sans-serif">
           {AGENT_NAME[id]}
         </text>

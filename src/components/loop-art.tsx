@@ -27,7 +27,7 @@ export function LoopArt({ className }: { className?: string }) {
       ))}
       {nodes.map((n, i) => (
         <g key={n.label}>
-          <rect x={n.x - 75} y={n.y - 24} width="150" height="48" rx="14" fill={i === 1 ? '#2446B5' : '#2A2926'} stroke={i === 1 ? '#2446B5' : '#4A4742'} />
+          <rect x={n.x - 75} y={n.y - 24} width="150" height="48" rx="14" style={{ fill: i === 1 ? 'rgb(var(--accent))' : '#2A2926', stroke: i === 1 ? 'rgb(var(--accent))' : '#4A4742' }} />
           <text x={n.x} y={n.y - 3} textAnchor="middle" fill="#FFFFFF" fontSize="14" fontWeight="600" fontFamily="IBM Plex Sans, sans-serif">
             {n.label}
           </text>

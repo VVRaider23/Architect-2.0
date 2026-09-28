@@ -74,7 +74,7 @@ function Setup() {
             <span className="mt-1 flex items-center gap-2 text-[13px] text-ink2">
               <input
                 type="checkbox"
-                className="h-4 w-4 accent-[#2446B5]"
+                className="h-4 w-4 accent-accent"
                 checked={domainJoin}
                 onChange={(e) => setDomainJoin(e.target.checked)}
                 id="domainJoin"

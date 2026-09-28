@@ -384,7 +384,7 @@ function NewClaimModal({ open, onClose, onCreate, nextId }: { open: boolean; onC
         </div>
         {kind === 'theft' && (
           <label className="flex items-center gap-2 text-[13px]">
-            <input type="checkbox" className="h-4 w-4 accent-[#2446B5]" checked={report} onChange={(e) => setReport(e.target.checked)} />
+            <input type="checkbox" className="h-4 w-4 accent-accent" checked={report} onChange={(e) => setReport(e.target.checked)} />
             The customer gave a police report number
           </label>
         )}

@@ -121,7 +121,10 @@ function Review() {
             <div className="mt-2.5">
               <ProgressBar value={rows.length ? (done / rows.length) * 100 : 0} tone="ok" />
             </div>
-            <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11.5px] text-ink2">
+            <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink2">
+              Check each answer like a new colleague’s work. If it’s wrong, say what it should have said: that becomes a test the app must pass.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11.5px] text-ink2">
               Keys: <Kbd>R</Kbd> right <Kbd>W</Kbd> wrong <Kbd>S</Kbd> not sure
             </div>
           </Card>
@@ -440,7 +443,7 @@ function ReviewCard({ p, row, index, total, onSkip }: { p: Project; row: Row; in
             <textarea className={textareaCls} rows={2} value={text} onChange={(e) => setText(e.target.value)} />
           </label>
           <label className="flex items-start gap-2 text-[13px]">
-            <input type="checkbox" className="mt-1 h-4 w-4 accent-[#2446B5]" checked={saveRule} onChange={(e) => setSaveRule(e.target.checked)} />
+            <input type="checkbox" className="mt-1 h-4 w-4 accent-accent" checked={saveRule} onChange={(e) => setSaveRule(e.target.checked)} />
             <span className="flex-1">
               Also save as a rule
               <input

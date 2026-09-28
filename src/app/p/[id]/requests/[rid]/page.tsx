@@ -82,6 +82,9 @@ function LaunchPack() {
             <p className="mt-1 text-[14px] text-ink2">
               {p.name} · for {r.audience} · requested by {r.requestedBy} {timeAgo(r.at, now)} · {r.firstLaunch ? `first launch to ${ENV_LABEL[r.env]}` : 'an update'}
             </p>
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-surface2 px-2.5 py-1 text-[12.5px] text-ink2 ring-1 ring-line print:hidden">
+              <ShieldCheck className="h-3.5 w-3.5 text-ok" /> Everything on this page comes from test runs, Meera’s reviews and the app’s settings. None of it is typed by the builder.
+            </p>
           </div>
 
           <Card>
@@ -120,7 +123,7 @@ function LaunchPack() {
               </Line>
               {agree.pct !== null && (
                 <Line ok={agree.pct >= 90}>
-                  The automatic grader agrees with Meera <b>{agree.pct}%</b> of the time ({agree.n} reviews)
+                  The automatic check agrees with Meera <b>{agree.pct}%</b> of the time ({agree.n} reviews)
                 </Line>
               )}
             </ul>
@@ -301,7 +304,7 @@ function DecisionForm({ p, r }: { p: Project; r: LaunchRequest }) {
             key={o.id}
             className={cn('flex cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5 text-[13.5px]', choice === o.id ? 'border-accent bg-accent-soft' : 'border-line hover:border-line2')}
           >
-            <input type="radio" name="decision" className="mt-0.5 h-4 w-4 accent-[#2446B5]" checked={choice === o.id} onChange={() => setChoice(o.id)} />
+            <input type="radio" name="decision" className="mt-0.5 h-4 w-4 accent-accent" checked={choice === o.id} onChange={() => setChoice(o.id)} />
             <span className="flex-1">
               <span className="font-medium">{o.label}</span>
               {o.id === 'approved_conditions' && choice === o.id && (
@@ -310,7 +313,7 @@ function DecisionForm({ p, r }: { p: Project; r: LaunchRequest }) {
                     <span key={c} className="flex items-center gap-2 text-[12.5px]">
                       <input
                         type="checkbox"
-                        className="h-3.5 w-3.5 accent-[#2446B5]"
+                        className="h-3.5 w-3.5 accent-accent"
                         checked={conds.includes(c)}
                         onChange={(e) => setConds((xs) => (e.target.checked ? [...xs, c] : xs.filter((x) => x !== c)))}
                       />

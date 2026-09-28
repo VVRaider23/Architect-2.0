@@ -4,12 +4,35 @@
 
 :root {
   color-scheme: light;
+  /* The palette, as RGB triplets so Tailwind can add opacity. Change the look here. */
+  --bg: 244 242 238;
+  --surface: 255 255 255;
+  --surface2: 249 248 245;
+  --sunken: 239 237 232;
+  --line: 227 224 216;
+  --line2: 203 199 189;
+  --ink: 29 28 26;
+  --ink2: 87 84 78;
+  --ink3: 124 120 111;
+  --accent: 36 70 181;
+  --accent-ink: 27 54 144;
+  --accent-soft: 232 237 251;
+  --accent-line: 185 198 240;
+  --ok: 31 122 69;
+  --ok-soft: 228 242 233;
+  --ok-line: 169 211 184;
+  --bad: 179 38 30;
+  --bad-soft: 251 231 228;
+  --bad-line: 237 181 174;
+  --warn: 138 90 0;
+  --warn-soft: 251 240 217;
+  --warn-line: 232 205 143;
 }
 
 html,
 body {
-  background: #f4f2ee;
-  color: #1d1c1a;
+  background: rgb(var(--bg));
+  color: rgb(var(--ink));
 }
 
 body {
@@ -19,17 +42,17 @@ body {
 }
 
 ::selection {
-  background: #e8edfb;
+  background: rgb(var(--accent-soft));
 }
 
 :focus-visible {
-  outline: 2px solid #2446b5;
+  outline: 2px solid rgb(var(--accent));
   outline-offset: 2px;
 }
 
 .scroll-thin {
   scrollbar-width: thin;
-  scrollbar-color: #cbc7bd transparent;
+  scrollbar-color: rgb(var(--line2)) transparent;
 }
 
 .scroll-thin::-webkit-scrollbar {
@@ -38,7 +61,7 @@ body {
 }
 
 .scroll-thin::-webkit-scrollbar-thumb {
-  background: #cbc7bd;
+  background: rgb(var(--line2));
   border-radius: 999px;
 }
 
