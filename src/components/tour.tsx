@@ -377,7 +377,14 @@ function useTargetRect(target?: string, active = true): Rect | null {
     const tick = () => {
       const el = document.querySelector<HTMLElement>(`[data-tour="${target}"]`);
       const r = el?.getBoundingClientRect();
-      const next = r && r.width > 0 && r.height > 0 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null;
+      let next = r && r.width > 0 && r.height > 0 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null;
+      // Hide the ring while something else (a drawer or a window) covers the element.
+      if (el && next) {
+        const px = Math.min(window.innerWidth - 1, Math.max(0, next.x + Math.min(next.w / 2, 40)));
+        const py = Math.min(window.innerHeight - 1, Math.max(0, next.y + Math.min(next.h / 2, 20)));
+        const top = document.elementFromPoint(px, py);
+        if (top && !el.contains(top) && !top.closest('[data-tour-card]')) next = null;
+      }
       const key = next ? `${Math.round(next.x)},${Math.round(next.y)},${Math.round(next.w)},${Math.round(next.h)}` : '';
       if (key !== last) {
         last = key;
@@ -521,6 +528,7 @@ export function TourCard() {
     <>
       {rect && <Ring rect={rect} />}
       <section
+        data-tour-card
         role="dialog"
         aria-label="Guided tour"
         className={cn(
