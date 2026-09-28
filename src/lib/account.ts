@@ -104,3 +104,6 @@ export async function listMyRepos(): Promise<{ login: string; repos: { name: str
 }
 
 export const askAI = <T,>(input: Record<string, unknown>) => post<T>('/api/ai', input);
+
+/** A signed API key for calling one environment of a deployed app. */
+export const createApiKey = (project: string, env: 'test' | 'live', version: number) => post<{ key: string }>('/api/v1/keys', { project, env, version });

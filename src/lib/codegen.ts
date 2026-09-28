@@ -226,12 +226,13 @@ def score_claim(claim: Claim) -> dict:
   }
 }
 
+const API_REQS = 'fastapi>=0.110\nuvicorn>=0.30\npydantic>=2\n';
 const REQS: Record<FrameworkId, string> = {
-  langgraph: 'langgraph>=0.2\nanthropic>=0.40\npytest>=8\n',
-  crewai: 'crewai>=0.80\npytest>=8\n',
-  'openai-agents': 'openai-agents>=0.1\npytest>=8\n',
-  'google-adk': 'google-adk>=1.0\npytest>=8\n',
-  lyzr: 'fastapi>=0.110\npydantic>=2\npytest>=8\n',
+  langgraph: 'langgraph>=0.2\nanthropic>=0.40\n' + API_REQS + 'pytest>=8\n',
+  crewai: 'crewai>=0.80\n' + API_REQS + 'pytest>=8\n',
+  'openai-agents': 'openai-agents>=0.1\n' + API_REQS + 'pytest>=8\n',
+  'google-adk': 'google-adk>=1.0\n' + API_REQS + 'pytest>=8\n',
+  lyzr: API_REQS + 'pytest>=8\n',
 };
 
 const NODES = `"""The LLM-backed agents. Model names and prompts come from agent.yaml."""
@@ -398,16 +399,73 @@ Built with Architect 2.0 for Harborline Insurance.
 - **Web app:** Next.js (see \`web/\`)
 - **Answer Key:** ${p.answerKey.length} examples in \`tests/answer_key.json\`, owned by the claims team
 
-## Run the Answer Key locally
+## Run it locally
 
 \`\`\`bash
-pip install pytest
-pytest tests/ -q
+pip install -r claims_agents/requirements.txt
+pytest tests/ -q                            # the Answer Key: every example must pass
+uvicorn claims_agents.api:app --reload      # the API, on http://localhost:8000
 \`\`\`
 
 The same tests run on every pull request (\`.github/workflows/proof.yml\`).
+
+## Call it from your code
+
+\`\`\`bash
+curl -X POST http://localhost:8000/api/v1/claims/triage \\
+  -H "Content-Type: application/json" \\
+  -d '{"kind": "theft", "amount": 950, "police_report": false}'
+\`\`\`
+
+Set \`API_KEY\` to require \`Authorization: Bearer <key>\` on every request.
 `;
 }
+
+const API_FILE = `"""HTTP API for the claims agents.
+
+The same endpoint Architect hosts for you (POST /api/v1/claims/triage), to run on your own servers:
+
+    pip install -r claims_agents/requirements.txt
+    uvicorn claims_agents.api:app --reload
+"""
+import os
+
+from fastapi import FastAPI, Header, HTTPException
+from pydantic import BaseModel, Field
+
+from claims_agents.risk_rules import score
+
+app = FastAPI(title="Claims Triage Assistant")
+
+KINDS = {"water_damage", "theft", "glass", "roof", "fire", "flood", "hail", "liability"}
+
+
+class Claim(BaseModel):
+    kind: str = Field(description="water_damage, theft, glass, roof, fire, flood, hail or liability")
+    amount: float
+    policy_age_days: int = 365
+    police_report: bool = False
+    title: str = ""
+    customer: str = "there"
+    email: str = ""
+
+
+@app.post("/api/v1/claims/triage")
+def triage(claim: Claim, authorization: str = Header(default="")) -> dict:
+    expected = os.environ.get("API_KEY")
+    if expected and authorization != f"Bearer {expected}":
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    if claim.kind not in KINDS:
+        raise HTTPException(status_code=400, detail=f"kind must be one of {sorted(KINDS)}")
+    result = score(claim.model_dump(), {"age_days": claim.policy_age_days})
+    return {
+        "decision": {
+            "risk": result["risk"],
+            "next_step": result["action"],
+            "reasons": result["reasons"],
+        }
+    }
+`;
 
 const WEB_PAGE = `import { listClaims } from '@/lib/claims';
 
@@ -463,6 +521,7 @@ export function generateFiles(p: Project, version = p.version): Files {
     [fwPath]: fwCode,
     'claims_agents/risk_rules.py': riskRules(version),
     'claims_agents/privacy.py': PRIVACY,
+    'claims_agents/api.py': API_FILE,
     'claims_agents/requirements.txt': REQS[p.framework],
     'tests/answer_key.json': answerKeyJson(p),
     'tests/test_answer_key.py': TEST_FILE,

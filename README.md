@@ -65,6 +65,7 @@ Short on time? On Home, click **Open a finished example**. To start over, use **
 | UI getting built | **Build → App** while building | Build steps, the app assembling and the code being written |
 | GitHub integration | Setup, **Import**, **Build → Code** | **Real GitHub:** connect your account, see your repos, analyze any repo, **push the generated code to a new repo** and **open real pull requests** with the test report. |
 | Deploying | **Sign off** and **Ship** | Launch rules and requests, then Preview, Test and Live, fast lane, rollback, custom domain and working app addresses |
+| For developers | **Ship → Use it from your own code**, **Build → Code** | **Every deployed app is also an API:** an endpoint, a key per environment, curl / Python / JavaScript snippets and a "Send a test request" button. The generated code includes the same API (`claims_agents/api.py`, FastAPI) and a **Run it locally** box: clone, install, `pytest`, `uvicorn`. |
 | First-time help | Front page, Home, every step | **Guided tour** (a narrator that runs the whole story and can do each step for you), a plain-words header on every step, and a "Next" line that always matches the main button |
 | Beyond the brief | **Prove**, review queue, Launch Pack, **Learn**, Settings | Answer Key, expert review, launch rules, live flags, audit trail with CSV export |
 
@@ -91,6 +92,19 @@ Short on time? On Home, click **Open a finished example**. To start over, use **
 - live traffic numbers
 
 Without any keys, everything still works in demo mode, and work is saved in the browser.
+
+## Call a deployed app from your code
+
+Every app you deploy is also an API. Try it now with the shared demo key (it runs the latest rules):
+
+```bash
+curl -X POST https://architect-2-0-alpha.vercel.app/api/v1/claims/triage \
+  -H "Authorization: Bearer ak_demo" \
+  -H "Content-Type: application/json" \
+  -d '{"kind": "theft", "amount": 950, "police_report": false}'
+```
+
+You get back the decision (`risk`, `next_step`, `reasons`, `draft_reply`) and every agent's step. In the app, **Ship → Use it from your own code** gives each environment its own key, which runs exactly the version deployed there. `GET` the same address for a short description of the fields.
 
 ## Run it locally
 

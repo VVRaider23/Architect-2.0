@@ -14,7 +14,7 @@ So Architect 2.0 is built for three people, not one:
 
 | Person | The question they own | What the product gives them |
 |---|---|---|
-| Arjun, builder | "Does it work?" | Prompt-to-app build, code in any framework, GitHub, change receipts |
+| Arjun, builder | "Does it work, and can I plug it into our systems?" | Prompt-to-app build, code in any framework, GitHub, change receipts, and every deployed app as an API |
 | Meera, expert | "Are the answers right?" | A review queue in plain words. Right, wrong or not sure. Her corrections become tests. |
 | Farah, IT | "Is it safe to launch?" | Launch rules she sets once, and a one-page Launch Pack built from evidence |
 
@@ -40,6 +40,7 @@ The first version of this prototype had a status bar, a row of seven tabs and a 
 | **Launch rules** plus a **fast lane** | IT decides once what needs them. Small, safe changes go straight to Test and still show in the audit trail. | Asking IT to approve every change |
 | **Framework-neutral** agents | Agents are described once (`agent.yaml`) and generated for LangGraph, CrewAI, OpenAI Agents SDK, Google ADK or Lyzr. The code lives in your GitHub. | Locking developers into one runtime |
 | **Learn by doing**: a guided tour | A narrator builds a real app with the visitor, highlights the button to press, switches people, and can do each step for them. | A wall of onboarding text or a video you can't touch |
+| **Every app is also an API** | Developers don't want another web page; they want to call the agents from the claims system they already have. Each deployed environment gets an endpoint and a key that runs exactly that version, and the same API ships in the generated code. | Leaving integration to "download the code and figure it out" |
 | **Plain words** | "3 wrong answers, all theft claims", "test run", "Launch Pack". | "Eval failures", "regression suite", "deployment gate" |
 
 ## 4. What we kept from today's Architect

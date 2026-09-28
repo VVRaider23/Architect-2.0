@@ -12,6 +12,7 @@ import { EnvPill } from '@/components/domain';
 import { Button, Card, Chip, Empty, Modal, inputCls } from '@/components/ui';
 import { cn, dateLabel, timeAgo } from '@/lib/utils';
 import { StepHeader } from './journey';
+import { ApiCard } from './api-card';
 
 export function statusTone(s: LaunchRequest['status']) {
   return s === 'pending' ? 'warn' : s === 'changes' || s === 'rejected' ? 'bad' : 'ok';
@@ -223,6 +224,8 @@ export function ShipTab({ p, state }: { p: Project; state?: PathStep['state'] })
         {envCard('test')}
         {envCard('live')}
       </div>
+
+      {isBuilder && <ApiCard p={p} />}
 
       <Card>
         <span className="text-[15px] font-semibold">Deploy settings</span>

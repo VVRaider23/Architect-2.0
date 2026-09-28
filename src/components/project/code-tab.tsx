@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Check, Copy, Download, FileCode2, Folder, GitBranch, RotateCcw, Upload } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Check, Copy, Download, FileCode2, Folder, GitBranch, RotateCcw, Terminal, Upload } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useUI } from '@/lib/ui';
 import { generateFiles, languageOf, sortedPaths } from '@/lib/codegen';
@@ -9,6 +9,7 @@ import type { Project } from '@/lib/types';
 import { CodeBlock, DiffBlock } from '@/components/code-view';
 import { PRButton, useGitHub } from './github';
 import { Button, Chip, Empty } from '@/components/ui';
+import { useClickOutside } from '@/components/shell';
 import { branchFor, cn, timeAgo } from '@/lib/utils';
 
 
@@ -18,7 +19,6 @@ export function CodeTab({ p }: { p: Project }) {
   const openCode = useUI((s) => s.openCode);
   const undoChange = useApp((s) => s.undoChange);
   const toast = useApp((s) => s.toast);
-  const [copied, setCopied] = useState(false);
   const gh = useGitHub(p);
   const [zipping, setZipping] = useState(false);
 
@@ -121,18 +121,7 @@ export function CodeTab({ p }: { p: Project }) {
           </Chip>
         )}
         <div className="flex-1" />
-        <button
-          onClick={() => {
-            void navigator.clipboard?.writeText(cloneCmd).catch(() => undefined);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-          }}
-          className="hidden h-8 max-w-[360px] items-center gap-1.5 truncate rounded-lg border border-line bg-surface2 px-2.5 font-mono text-[11.5px] text-ink2 hover:border-line2 2xl:flex"
-          title="Copy the clone command"
-        >
-          {copied ? <Check className="h-3.5 w-3.5 text-ok" /> : <Copy className="h-3.5 w-3.5" />}
-          {cloneCmd}
-        </button>
+        <RunLocally cloneCmd={cloneCmd} root={p.repo.split('/')[1] ?? 'app'} examples={p.answerKey.length} />
         <Button size="sm" variant="primary" loading={zipping} onClick={download} icon={<Download className="h-3.5 w-3.5" />}>
           Download code (.zip)
         </Button>
@@ -227,6 +216,57 @@ export function CodeTab({ p }: { p: Project }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** For developers: the four commands to run the app, its tests and its API on their own machine. */
+function RunLocally({ cloneCmd, root, examples }: { cloneCmd: string; root: string; examples: number }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useClickOutside(ref, () => setOpen(false));
+  const steps: [string, string][] = [
+    [cloneCmd, 'or unzip the download'],
+    [`cd ${root}`, ''],
+    ['pip install -r claims_agents/requirements.txt', ''],
+    ['pytest tests/ -q', `runs the Answer Key: ${examples} examples`],
+    ['uvicorn claims_agents.api:app --reload', 'the API on localhost:8000'],
+  ];
+  const all = steps.map(([c]) => c).join('\n');
+  return (
+    <div ref={ref} className="relative">
+      <Button size="sm" variant="ghost" onClick={() => setOpen((o) => !o)} icon={<Terminal className="h-3.5 w-3.5" />} aria-expanded={open}>
+        Run it locally
+      </Button>
+      {open && (
+        <div className="absolute right-0 top-10 z-40 w-[min(520px,calc(100vw-32px))] rounded-xl border border-line bg-surface p-4 shadow-pop animate-slide-up">
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-semibold">Run it on your own machine</span>
+            <button
+              onClick={() => {
+                void navigator.clipboard?.writeText(all).catch(() => undefined);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+              className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[12px] font-medium text-accent hover:bg-accent-soft"
+            >
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? 'Copied' : 'Copy all'}
+            </button>
+          </div>
+          <p className="mt-0.5 text-[12.5px] text-ink2">Plain Python and Next.js. Nothing here needs Architect to run.</p>
+          <ol className="mt-3 grid gap-1.5 rounded-lg bg-code px-3 py-2.5 font-mono text-[12px] text-code-ink">
+            {steps.map(([cmd, note], i) => (
+              <li key={cmd} className="flex flex-wrap items-baseline gap-x-3">
+                <span className="select-none text-code-dim">{i + 1}</span>
+                <span className="break-all">{cmd}</span>
+                {note && <span className="text-code-dim"># {note}</span>}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }

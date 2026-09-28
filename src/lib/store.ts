@@ -151,6 +151,7 @@ export interface AppState {
   setTheme: (pid: string, theme: string) => void;
   setCustomDomain: (pid: string, domain: string) => void;
   setEnvVar: (pid: string, name: string) => void;
+  setApiKey: (pid: string, env: 'test' | 'live', key: string, version: number) => void;
   removeEnvVar: (pid: string, name: string) => void;
   importProject: (info: ImportInfo, frameworkId: FrameworkId | null) => string;
   quickStartDemo: () => string;
@@ -490,6 +491,12 @@ export const useApp = create<AppState>()(
             const list = p.envVars ?? DEFAULT_ENV_VARS.map((n) => ({ name: n, at: p.createdAt }));
             p.envVars = [...list.filter((v) => v.name !== key), { name: key, at: Date.now() }];
             pushAudit(s, 'Arjun', 'set environment variable', p.name, key);
+          }),
+
+        setApiKey: (pid, env, key, version) =>
+          withProject(pid, (p, s) => {
+            p.apiKeys = { ...(p.apiKeys ?? {}), [env]: { key, version, at: Date.now() } };
+            pushAudit(s, 'Arjun', 'created an API key', p.name, `${env === 'live' ? 'Live' : 'Test'} · v${version}`);
           }),
 
         removeEnvVar: (pid, name) =>

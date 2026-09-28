@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbConfigured, ensureSchema, sql } from '@/server/db';
 import { callbackUrl, githubConfigured } from '@/server/github';
 import { aiProvider, allow, complete } from '@/server/ai';
-import { env } from '@/server/env';
+import { databaseProvider, databaseSetting, env } from '@/server/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +53,10 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(
     {
       database,
+      databaseService: databaseProvider(),
+      databaseSetting: databaseSetting(),
+      // Settings from the first version (Supabase sign-in) that nothing reads any more.
+      unusedSettings: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'].filter((k) => env(k)),
       accounts: database === 'ok',
       github,
       githubRedirectUri: githubConfigured() ? callbackUrl(req.nextUrl.origin) : null,

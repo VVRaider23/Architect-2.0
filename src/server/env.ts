@@ -7,13 +7,35 @@ export function env(name: string): string {
   return (process.env[name] ?? '').trim();
 }
 
-export function databaseUrl(): string {
-  const direct = env('DATABASE_URL') || env('POSTGRES_URL');
-  if (direct) return direct;
+/** Which setting holds the database address, if any. */
+export function databaseSetting(): string | null {
+  if (env('DATABASE_URL')) return 'DATABASE_URL';
+  if (env('POSTGRES_URL')) return 'POSTGRES_URL';
   const key = Object.keys(process.env)
-    .filter((k) => /(^|_)(DATABASE_URL|POSTGRES_URL)$/.test(k) && !/UNPOOLED|NON_POOLING|NO_SSL/.test(k))
+    .filter((k) => /(^|_)(DATABASE_URL|POSTGRES_URL)$/.test(k) && !/UNPOOLED|NON_POOLING|NO_SSL/.test(k) && env(k))
     .sort()[0];
+  return key ?? null;
+}
+
+export function databaseUrl(): string {
+  const key = databaseSetting();
   return key ? env(key) : '';
+}
+
+/** The database service, named from its address without revealing it. */
+export function databaseProvider(): string | null {
+  const url = databaseUrl();
+  if (!url) return null;
+  let host = '';
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    return 'Postgres';
+  }
+  if (/neon\.tech$/.test(host)) return 'Neon';
+  if (/supabase\.(co|com)$/.test(host) || /pooler\.supabase/.test(host)) return 'Supabase';
+  if (/^(localhost|127\.0\.0\.1)$/.test(host)) return 'Local Postgres';
+  return 'Postgres';
 }
 
 /** The public address of the site, always with https:// and no trailing slash. */

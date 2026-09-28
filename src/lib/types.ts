@@ -312,6 +312,8 @@ export interface Project {
   customDomain?: string;
   /** Names of the app's environment variables. Values are never kept in the browser. */
   envVars?: { name: string; at: number }[];
+  /** API keys for calling the deployed app from code, one per environment. */
+  apiKeys?: Partial<Record<'test' | 'live', { key: string; version: number; at: number }>>;
 }
 
 export interface ImportInfo {
