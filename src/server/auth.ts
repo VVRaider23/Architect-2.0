@@ -6,13 +6,14 @@ import crypto from 'node:crypto';
 import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
 import { dbConfigured, userById, type UserRow } from './db';
+import { databaseUrl, env } from './env';
 
 export const SESSION_COOKIE = 'arch_session';
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 /** AUTH_SECRET if set; otherwise derived from the database URL so no extra setup is needed. */
 function secret(): Buffer {
-  const base = process.env.AUTH_SECRET || `architect-2::${process.env.DATABASE_URL || process.env.POSTGRES_URL || 'local-dev'}`;
+  const base = env('AUTH_SECRET') || `architect-2::${databaseUrl() || 'local-dev'}`;
   return crypto.createHash('sha256').update(base).digest();
 }
 
@@ -129,7 +130,7 @@ export function publicUser(u: UserRow): PublicUser {
 export function features() {
   return {
     accounts: dbConfigured,
-    github: Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET && dbConfigured),
-    ai: process.env.ANTHROPIC_API_KEY ? 'anthropic' : process.env.OPENAI_API_KEY ? 'openai' : null,
+    github: Boolean(env('GITHUB_CLIENT_ID') && env('GITHUB_CLIENT_SECRET') && dbConfigured),
+    ai: env('ANTHROPIC_API_KEY') ? 'anthropic' : env('OPENAI_API_KEY') ? 'openai' : null,
   } as const;
 }

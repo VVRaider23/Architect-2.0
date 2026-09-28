@@ -3,11 +3,13 @@
  * AI_MODEL overrides the model. Everything scripted in the demo stays deterministic; AI answers the
  * open questions, runs the "Try it" agent playground and suggests app ideas.
  */
+import { env } from './env';
+
 const ANTHROPIC_URL = process.env.ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com';
 const OPENAI_URL = process.env.OPENAI_BASE_URL ?? 'https://api.openai.com';
 
 export function aiProvider(): 'anthropic' | 'openai' | null {
-  return process.env.ANTHROPIC_API_KEY ? 'anthropic' : process.env.OPENAI_API_KEY ? 'openai' : null;
+  return env('ANTHROPIC_API_KEY') ? 'anthropic' : env('OPENAI_API_KEY') ? 'openai' : null;
 }
 
 export async function complete(system: string, user: string, maxTokens = 500): Promise<string> {
@@ -21,12 +23,12 @@ export async function complete(system: string, user: string, maxTokens = 500): P
         method: 'POST',
         signal: ctl.signal,
         headers: {
-          'x-api-key': process.env.ANTHROPIC_API_KEY!,
+          'x-api-key': env('ANTHROPIC_API_KEY'),
           'anthropic-version': '2023-06-01',
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          model: process.env.AI_MODEL || 'claude-haiku-4-5-20251001',
+          model: env('AI_MODEL') || 'claude-haiku-4-5-20251001',
           max_tokens: maxTokens,
           system,
           messages: [{ role: 'user', content: user }],
@@ -39,9 +41,9 @@ export async function complete(system: string, user: string, maxTokens = 500): P
     const res = await fetch(`${OPENAI_URL}/v1/chat/completions`, {
       method: 'POST',
       signal: ctl.signal,
-      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'content-type': 'application/json' },
+      headers: { Authorization: `Bearer ${env('OPENAI_API_KEY')}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: process.env.AI_MODEL || 'gpt-4.1-mini',
+        model: env('AI_MODEL') || 'gpt-4.1-mini',
         max_completion_tokens: maxTokens,
         messages: [
           { role: 'system', content: system },

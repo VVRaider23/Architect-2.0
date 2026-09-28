@@ -3,10 +3,12 @@
  * (new repo, commits, branches and pull requests) with the Git Data API.
  * Base URLs can be overridden for local testing against a mock (GITHUB_API_URL, GITHUB_OAUTH_URL).
  */
+import { appUrl, env } from './env';
+
 export const GH_API = process.env.GITHUB_API_URL ?? 'https://api.github.com';
 export const GH_OAUTH = process.env.GITHUB_OAUTH_URL ?? 'https://github.com';
 
-export const githubConfigured = () => Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
+export const githubConfigured = () => Boolean(env('GITHUB_CLIENT_ID') && env('GITHUB_CLIENT_SECRET'));
 
 export const SCOPES = {
   signin: 'read:user user:email',
@@ -15,12 +17,12 @@ export const SCOPES = {
 
 /** Where GitHub sends people back. Uses the production address on Vercel so it matches the OAuth app. */
 export function callbackUrl(origin: string) {
-  const base = process.env.APP_URL || (process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : origin);
+  const base = appUrl() || (process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : origin);
   return `${base.replace(/\/$/, '')}/api/auth/github/callback`;
 }
 
 export function authorizeUrl(state: string, scope: string, redirectUri: string) {
-  const q = new URLSearchParams({ client_id: process.env.GITHUB_CLIENT_ID ?? '', redirect_uri: redirectUri, scope, state, allow_signup: 'true' });
+  const q = new URLSearchParams({ client_id: env('GITHUB_CLIENT_ID'), redirect_uri: redirectUri, scope, state, allow_signup: 'true' });
   return `${GH_OAUTH}/login/oauth/authorize?${q}`;
 }
 
@@ -28,7 +30,7 @@ export async function exchangeCode(code: string, redirectUri: string): Promise<{
   const res = await fetch(`${GH_OAUTH}/login/oauth/access_token`, {
     method: 'POST',
     headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ client_id: process.env.GITHUB_CLIENT_ID, client_secret: process.env.GITHUB_CLIENT_SECRET, code, redirect_uri: redirectUri }),
+    body: JSON.stringify({ client_id: env('GITHUB_CLIENT_ID'), client_secret: env('GITHUB_CLIENT_SECRET'), code, redirect_uri: redirectUri }),
     cache: 'no-store',
   });
   const data = (await res.json()) as { access_token?: string; scope?: string; error_description?: string };

@@ -4,8 +4,9 @@
  * Tables are created on first use, so there is no manual SQL step.
  */
 import postgres from 'postgres';
+import { databaseUrl } from './env';
 
-const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+const url = databaseUrl();
 
 export const dbConfigured = Boolean(url);
 
