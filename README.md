@@ -2,7 +2,7 @@
 
 A working prototype of the next version of [architect.new](https://architect.new): build an AI-agent app from a prompt or from your own repo, **prove** it with your experts' examples, and **ship** it with IT's sign-off.
 
-**Live demo:** _add the Vercel link here_ · **Try it in 3 minutes:** follow the [demo script](#demo-script-about-3-minutes).
+**Live demo:** [architect-2-0-alpha.vercel.app](https://architect-2-0-alpha.vercel.app) · **Try it in 3 minutes:** follow the [demo script](#demo-script-about-3-minutes).
 
 ---
 
