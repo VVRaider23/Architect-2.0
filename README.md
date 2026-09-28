@@ -109,7 +109,8 @@ No keys are needed. For a local database, run `node scripts/local-db.mjs` and se
 | Setting | How to get it | What it turns on |
 |---|---|---|
 | `DATABASE_URL` | **Storage → Create Database → Neon**, connected to the project (added for you) | Real accounts, with each person's work saved in the database |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | github.com → Settings → Developer settings → OAuth Apps → New. Callback URL: `https://<your-site>/api/auth/github/callback` | Sign in with GitHub, your repos, pushing code, pull requests |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | github.com → Settings → Developer settings → OAuth Apps → New. Redirect URI: `https://<your-site>/api/auth/github/callback`. Untick **Expire user access tokens**. | Sign in with GitHub, your repos, pushing code, pull requests |
+| `APP_URL` (recommended) | Your site's address, e.g. `https://architect-2-0-alpha.vercel.app` | Makes GitHub always return people to that address |
 | `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | console.anthropic.com or platform.openai.com | Real AI answers in chat, the agent playground and the AI Consultant |
 | `GITHUB_TOKEN` (optional) | A read-only GitHub token | Higher limits for reading public repos on Import |
 

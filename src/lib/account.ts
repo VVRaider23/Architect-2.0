@@ -99,7 +99,7 @@ export const pushToGitHub = (input: {
 export async function listMyRepos(): Promise<{ login: string; repos: { name: string; description: string | null; language: string | null; pushedAt: string; private: boolean; url: string }[] }> {
   const res = await fetch('/api/github/repos', { cache: 'no-store' });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Could not load your repositories.');
+  if (!res.ok) throw Object.assign(new Error(data.error || 'Could not load your repositories.'), { needConnect: !!data.needConnect });
   return data;
 }
 

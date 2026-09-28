@@ -135,7 +135,12 @@ export async function GET(req: NextRequest) {
   let languages: string[] = [];
   let partial = false;
 
-  const meta = await get(`${API}/repos/${owner}/${repo}`, apiHeaders);
+  let meta = await get(`${API}/repos/${owner}/${repo}`, apiHeaders);
+  if (meta && meta.status === 401 && apiHeaders.Authorization) {
+    // The saved token has expired or was revoked: public repos can still be read without it.
+    delete apiHeaders.Authorization;
+    meta = await get(`${API}/repos/${owner}/${repo}`, apiHeaders);
+  }
   if (meta && meta.status === 404) {
     return NextResponse.json({ error: `Couldn’t find ${owner}/${repo}. Check the name, and note that only public repos can be read without connecting GitHub.` }, { status: 404 });
   }

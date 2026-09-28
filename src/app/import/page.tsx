@@ -87,6 +87,7 @@ function Import() {
   const { features, user } = useServer();
   const [mine, setMine] = useState<{ name: string; meta: string }[] | null>(null);
   const [mineError, setMineError] = useState('');
+  const [reconnect, setReconnect] = useState(false);
 
   useEffect(() => {
     if (!user?.github) return;
@@ -99,7 +100,10 @@ function Import() {
           })),
         ),
       )
-      .catch((e) => setMineError(e instanceof Error ? e.message : 'Could not load your repositories.'));
+      .catch((e) => {
+        setMineError(e instanceof Error ? e.message : 'Could not load your repositories.');
+        setReconnect(!!(e as { needConnect?: boolean }).needConnect);
+      });
   }, [user?.github]);
 
   const show = (x: RepoAnalysis) => {
@@ -214,7 +218,16 @@ function Import() {
               {user?.github ? (
                 <ul className="scroll-thin max-h-[360px] overflow-y-auto">
                   {mine === null && !mineError && <li className="px-4 py-3 text-[12.5px] text-ink2">Loading your repositories…</li>}
-                  {mineError && <li className="px-4 py-3 text-[12.5px] text-bad">{mineError}</li>}
+                  {mineError && (
+                    <li className="px-4 py-3 text-[12.5px] text-bad">
+                      {mineError}{' '}
+                      {reconnect && (
+                        <a href={githubUrl('connect', '/import')} className="font-medium text-accent hover:underline">
+                          Connect GitHub
+                        </a>
+                      )}
+                    </li>
+                  )}
                   {mine?.length === 0 && <li className="px-4 py-3 text-[12.5px] text-ink2">No repositories yet.</li>}
                   {mine?.map((d) => (
                     <li key={d.name}>
