@@ -60,7 +60,7 @@ export function ClaimsApp({
       className={cn('flex min-h-0 flex-col bg-[#F7F8FA] text-[#1B2230]', embedded ? 'h-full' : 'min-h-screen')}
       style={{ ['--app-primary' as string]: th.primary, ['--app-hover' as string]: th.hover, ['--app-soft' as string]: th.soft, fontFamily: th.font } as React.CSSProperties}
     >
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[#E3E7EE] bg-white px-4">
+      <header data-sel="Header" className="flex h-12 shrink-0 items-center gap-3 border-b border-[#E3E7EE] bg-white px-4">
         <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--app-primary)] text-[13px] font-bold text-white">H</span>
         <span className="text-[14px] font-semibold">Harborline Claims</span>
         <EnvPill env={env} version={version} />
@@ -70,7 +70,7 @@ export function ClaimsApp({
       </header>
       <div className="flex min-h-0 flex-1">
         {!mobile && (
-          <nav className="flex w-[176px] shrink-0 flex-col gap-0.5 border-r border-[#E3E7EE] bg-white p-2 text-[13px]">
+          <nav data-sel="Side menu" className="flex w-[176px] shrink-0 flex-col gap-0.5 border-r border-[#E3E7EE] bg-white p-2 text-[13px]">
             {(
               [
                 ['inbox', 'Claims inbox', claims.length, Inbox],
@@ -99,10 +99,11 @@ export function ClaimsApp({
         <div className={cn('min-w-0 flex-1 overflow-auto', current && mobile && 'hidden')}>
           <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-4">
             <div className="min-w-0">
-              <h2 className="text-[16px] font-semibold">{section === 'risk' ? 'Risk review' : section === 'drafts' ? 'Reply drafts' : 'Claims inbox'}</h2>
+              <h2 data-sel="Page title" className="text-[16px] font-semibold">{section === 'risk' ? 'Risk review' : section === 'drafts' ? 'Reply drafts' : 'Claims inbox'}</h2>
               <p className="text-[12px] text-[#5B6576]">{section === 'risk' ? 'High risk or blocked. A person decides.' : 'Newest first. Click a claim to see the assistant’s work.'}</p>
             </div>
             <button
+              data-sel="New claim button"
               onClick={() => setNewOpen(true)}
               className="flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-[var(--app-primary)] px-3 text-[12.5px] font-medium text-white hover:bg-[var(--app-hover)]"
             >
@@ -125,7 +126,7 @@ export function ClaimsApp({
                   ))}
                 </ul>
               ) : (
-                <table className="w-full text-left text-[12.5px]">
+                <table data-sel="Claims table" className="w-full text-left text-[12.5px]">
                   <thead className="bg-[#F7F9FC] text-[11.5px] text-[#5B6576]">
                     <tr>
                       <th className="px-3.5 py-2 font-medium">Claim</th>
@@ -150,7 +151,7 @@ export function ClaimsApp({
                         {!compact && <td className="px-3.5 py-2.5 text-[#3B4454]">{c.customer}</td>}
                         <td className="px-3.5 py-2.5 font-mono">{money(c.amount)}</td>
                         <td className="px-3.5 py-2.5">
-                          <RiskChip risk={verdict.risk} />
+                          <span data-sel="Risk badge" className="inline-flex"><RiskChip risk={verdict.risk} /></span>
                         </td>
                         {!compact && <td className="px-3.5 py-2.5 text-[#3B4454]">{ACTION_LABEL[verdict.action]}</td>}
                         {!compact && <td className="px-3.5 py-2.5 text-[#7A8494]">{received}</td>}
@@ -208,7 +209,7 @@ function ClaimDetail({
   const [note, setNote] = useState('');
   const [flagged, setFlagged] = useState(false);
   return (
-    <section className={cn('flex shrink-0 flex-col overflow-y-auto border-l border-[#E3E7EE] bg-white', mobile ? 'w-full' : 'w-[380px]')} aria-label="Claim detail">
+    <section data-sel="Claim detail" className={cn('flex shrink-0 flex-col overflow-y-auto border-l border-[#E3E7EE] bg-white', mobile ? 'w-full' : 'w-[380px]')} aria-label="Claim detail">
       <div className="flex items-start gap-2 border-b border-[#EEF1F5] px-4 py-3">
         <div className="flex-1">
           <div className="font-mono text-[11px] text-[#7A8494]">
@@ -239,7 +240,7 @@ function ClaimDetail({
         <div className="rounded-lg border border-[#E3E7EE] p-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-[#7A8494]">Assistant’s assessment</div>
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <RiskChip risk={verdict.risk} />
+            <span data-sel="Risk badge" className="inline-flex"><RiskChip risk={verdict.risk} /></span>
             <span className="text-[13px] font-medium">{ACTION_LABEL[verdict.action]}</span>
           </div>
           <p className="mt-1.5 text-[12.5px] text-[#3B4454]">Why: {verdict.reasons[0]}.</p>

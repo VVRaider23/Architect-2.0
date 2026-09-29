@@ -6,8 +6,8 @@ import { useApp } from '@/lib/store';
 import { PEOPLE } from '@/lib/seed';
 import { githubUrl, useServer } from '@/lib/account';
 import type { LaunchRules } from '@/lib/types';
-import { RequireAuth, WorkspaceBar, roleLabel } from '@/components/shell';
-import { Avatar, Button, Card, Chip, Toggle } from '@/components/ui';
+import { AppShell, RequireAuth, roleLabel } from '@/components/shell';
+import { Avatar, Button, Card, Chip, Segmented, Toggle } from '@/components/ui';
 import { cn, dateLabel, clock } from '@/lib/utils';
 
 type Section = 'rules' | 'members' | 'connections' | 'audit' | 'usage';
@@ -23,48 +23,41 @@ export default function SettingsPage() {
 function Settings() {
   const viewAs = useApp((s) => s.viewAs);
   const [section, setSection] = useState<Section>('rules');
-  const items: [Section, string][] = [
-    ['rules', 'Launch rules'],
-    ['members', 'Members and roles'],
-    ['connections', 'Connections'],
-    ['audit', 'Audit trail'],
-    ['usage', 'Credits and usage'],
+  const items: { id: Section; label: string }[] = [
+    { id: 'rules', label: 'Launch rules' },
+    { id: 'members', label: 'People' },
+    { id: 'connections', label: 'Connections' },
+    { id: 'audit', label: 'Audit trail' },
   ];
   useEffect(() => {
     const h = window.location.hash.replace('#', '') as Section;
-    if (items.some(([id]) => id === h)) setSection(h);
+    if (items.some((x) => x.id === h)) setSection(h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
-    <div className="min-h-screen">
-      <WorkspaceBar />
-      <main className="mx-auto grid max-w-[1160px] gap-6 px-5 py-8 md:grid-cols-[210px_minmax(0,1fr)]">
-        <nav className="flex gap-1 overflow-x-auto md:flex-col" aria-label="Settings">
-          {items.map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => {
-                setSection(id);
-                history.replaceState(null, '', `#${id}`);
-              }}
-              className={cn(
-                'whitespace-nowrap rounded-lg px-3 py-2 text-left text-[13.5px]',
-                section === id ? 'bg-surface font-semibold text-ink shadow-card' : 'text-ink2 hover:bg-sunken',
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-        <div className="min-w-0">
+    <AppShell>
+      <div className="mx-auto w-full max-w-[880px] px-4 pb-24 pt-10 sm:px-6">
+        <h1 className="text-[28px] font-semibold tracking-[-0.02em] animate-screen-in">{viewAs === 'approver' ? 'Launch rules' : 'Settings'}</h1>
+        <div className="mt-5 overflow-x-auto">
+          <Segmented
+            label="Settings"
+            value={section}
+            onChange={(id) => {
+              setSection(id);
+              history.replaceState(null, '', `#${id}`);
+            }}
+            options={items}
+          />
+        </div>
+        <div key={section} className="mt-6 min-w-0 animate-fade-in">
           {section === 'rules' && <RulesEditor canEdit={viewAs === 'approver'} />}
           {section === 'members' && <Members />}
           {section === 'connections' && <Connections />}
           {section === 'audit' && <Audit />}
           {section === 'usage' && <Usage />}
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
 

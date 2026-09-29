@@ -145,6 +145,8 @@ export interface ChangeReceipt {
   /** Link to a real pull request, when GitHub is connected. */
   prUrl?: string;
   committed: boolean;
+  /** The pull request was merged into main. */
+  merged?: boolean;
   undone?: boolean;
   diffFile?: string;
   beforeText?: string;
@@ -349,10 +351,20 @@ export interface AuditEvent {
   detail?: string;
 }
 
+export interface ToastAction {
+  label: string;
+  run: () => void;
+  primary?: boolean;
+}
+
 export interface ToastMsg {
   id: string;
   text: string;
   tone: 'neutral' | 'ok' | 'bad';
+  /** Buttons inside the toast, such as Undo. Kept in memory only, never saved. */
+  actions?: ToastAction[];
+  /** How long it stays, in milliseconds. Toasts with actions stay longer and pause while hovered. */
+  ms?: number;
 }
 
 export interface OtherProject {

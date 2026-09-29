@@ -3,14 +3,18 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, ChevronDown, CloudCheck, CloudOff, Compass, Loader2, LogOut, RotateCcw } from 'lucide-react';
+import { Check, ChevronDown, CloudCheck, CloudOff, Compass, FolderKanban, Gauge, Home, Keyboard, Loader2, LogOut, RotateCcw, Search, Settings, X } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
 import { PEOPLE } from '@/lib/seed';
 import { logOutRequest, useServer } from '@/lib/account';
-import type { Role } from '@/lib/types';
+import { homeFor } from '@/lib/routes';
+import type { Project, Role, ToastMsg, Workspace } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Avatar } from './ui';
+import { Avatar, Kbd, Menu, useClickOutside } from './ui';
+import { usePalette } from './palette';
+
+export { useClickOutside, homeFor };
 
 export function LogoMark({ size = 26 }: { size?: number }) {
   return (
@@ -22,150 +26,140 @@ export function LogoMark({ size = 26 }: { size?: number }) {
   );
 }
 
-export function Logo({ href = '/home' }: { href?: string }) {
+export function Logo({ href = '/home', compact }: { href?: string; compact?: boolean }) {
   return (
-    <Link href={href} className="flex items-center gap-2 rounded-lg pr-1 text-[15.5px] font-semibold tracking-tight text-ink">
+    <Link href={href} className="press flex shrink-0 items-center gap-2 rounded-lg pr-1 text-[15.5px] font-semibold tracking-tight text-ink" aria-label="Architect home">
       <LogoMark />
-      <span>Architect</span>
-      <span className="rounded-md border border-line bg-sunken px-1.5 py-[1px] font-mono text-[10.5px] font-medium text-ink2">2.0</span>
+      {!compact && <span>Architect</span>}
     </Link>
   );
 }
 
-const ROLE_LABEL: Record<Role, string> = { builder: 'Builder', reviewer: 'Reviewer', approver: 'Approver' };
-const ROLE_SEES: Record<Role, string> = {
-  builder: 'Builds, owns the code, ships',
-  reviewer: 'Reviews answers. No code.',
-  approver: 'Approves launches. No code.',
+const ROLE_LABEL: Record<Role, string> = { builder: 'Builder', reviewer: 'Expert', approver: 'IT' };
+const ROLE_DOES: Record<Role, string> = {
+  builder: 'Builds the app and ships it',
+  reviewer: 'Checks answers. Never sees code.',
+  approver: 'Approves launches. Never sees code.',
 };
 export const roleLabel = (r: Role) => ROLE_LABEL[r];
+export const roleTone = (r: Role) => (r === 'builder' ? 'accent' : r === 'reviewer' ? 'ok' : 'warn') as 'accent' | 'ok' | 'warn';
 
-export function useClickOutside(ref: React.RefObject<HTMLElement | null>, onOut: () => void) {
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onOut();
-    };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [ref, onOut]);
-}
-
-export function ViewAsSwitch({ onSwitch }: { onSwitch?: (role: Role) => void }) {
+/** The demo switch: see the same project as Arjun, Meera or Farah without three accounts. */
+export function PersonSwitch({ compact }: { compact?: boolean }) {
   const viewAs = useApp((s) => s.viewAs);
   const setViewAs = useApp((s) => s.setViewAs);
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useClickOutside(ref, () => setOpen(false));
+  const projects = useApp((s) => s.projects);
+  const pathname = usePathname();
+  const router = useRouter();
   const me = PEOPLE.find((p) => p.role === viewAs)!;
+  const pid = pathname.match(/^\/p\/([^/]+)/)?.[1];
+  const p = projects.find((x) => x.id === pid);
   return (
-    <div ref={ref} className="relative" data-tour="person-switch">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        title="Demo switch: see the project as Arjun, Meera or Farah"
-        className="flex h-9 items-center gap-2 rounded-lg border border-line bg-surface2 pl-1.5 pr-2.5 text-[12.5px] text-ink hover:border-line2"
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <Avatar initials={me.initials} size={24} tone={viewAs === 'builder' ? 'accent' : viewAs === 'reviewer' ? 'ok' : 'warn'} />
-        <span className="text-ink2">View as</span>
-        <span className="font-semibold">
-          {me.short} · {ROLE_LABEL[viewAs]}
-        </span>
-        <ChevronDown className="h-3.5 w-3.5 text-ink2" />
-      </button>
-      {open && (
-        <div role="menu" className="absolute right-0 top-11 z-40 w-[300px] rounded-xl border border-line bg-surface p-1.5 shadow-pop animate-slide-up">
-          <div className="px-2.5 pb-1.5 pt-1 text-[11.5px] text-ink2">
-            Demo switch: see the same project as each person, without three accounts.
-          </div>
-          {PEOPLE.map((p) => (
-            <button
-              key={p.id}
-              role="menuitemradio"
-              aria-checked={p.role === viewAs}
-              onClick={() => {
-                setViewAs(p.role);
-                setOpen(false);
-                onSwitch?.(p.role);
-              }}
-              className={cn('flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left hover:bg-sunken', p.role === viewAs && 'bg-accent-soft')}
-            >
-              <Avatar initials={p.initials} size={30} tone={p.role === 'builder' ? 'accent' : p.role === 'reviewer' ? 'ok' : 'warn'} />
-              <span className="flex-1">
-                <span className="block text-[13px] font-semibold">
-                  {p.name} · {ROLE_LABEL[p.role]}
-                </span>
-                <span className="block text-[12px] text-ink2">
-                  {p.title} · {ROLE_SEES[p.role]}
-                </span>
+    <div data-tour="person-switch">
+      <Menu
+        align="end"
+        width={300}
+        label="See the project as"
+        header={<div className="px-2.5 pb-1.5 pt-1.5 text-[12px] text-ink3">Demo switch: see the same work as each person.</div>}
+        items={PEOPLE.map((person) => ({
+          id: person.id,
+          label: `${person.short} · ${ROLE_LABEL[person.role]}`,
+          sub: ROLE_DOES[person.role],
+          icon: <Avatar initials={person.initials} size={26} tone={roleTone(person.role)} />,
+          checked: person.role === viewAs,
+          onSelect: () => {
+            if (person.role === viewAs) return;
+            setViewAs(person.role);
+            if (p) router.push(homeFor(person.role, p));
+            else if (pathname !== '/home') router.push('/home');
+          },
+        }))}
+        trigger={({ open, toggle }) => (
+          <button
+            type="button"
+            onClick={toggle}
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={`Viewing as ${me.short}. Switch person`}
+            className="press flex h-9 items-center gap-2 rounded-[10px] border border-line bg-surface2 pl-1.5 pr-2 text-[13px] hover:border-line2"
+          >
+            <Avatar initials={me.initials} size={24} tone={roleTone(viewAs)} />
+            {!compact && (
+              <span className="hidden sm:inline">
+                <span className="text-ink3">View as </span>
+                <span className="font-medium text-ink">{me.short}</span>
               </span>
-              {p.role === viewAs && <Check className="h-4 w-4 text-accent" />}
-            </button>
-          ))}
-        </div>
-      )}
+            )}
+            <ChevronDown className={cn('h-3.5 w-3.5 text-ink3 transition-transform duration-200', open && 'rotate-180')} />
+          </button>
+        )}
+      />
     </div>
   );
 }
 
+/** Old name, kept so older screens keep working. */
+export const ViewAsSwitch = PersonSwitch;
+
 export function UserMenu() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useClickOutside(ref, () => setOpen(false));
   const email = useApp((s) => s.userEmail);
   const authMode = useApp((s) => s.authMode);
   const resetDemo = useApp((s) => s.resetDemo);
   const signOut = useApp((s) => s.signOut);
-  const router = useRouter();
   const viewAs = useApp((s) => s.viewAs);
+  const router = useRouter();
   const me = PEOPLE.find((p) => p.role === viewAs)!;
   return (
-    <div ref={ref} className="relative">
-      <button onClick={() => setOpen((o) => !o)} aria-label="Account menu" className="rounded-full">
-        <Avatar initials={me.initials} size={34} />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-11 z-40 w-[260px] rounded-xl border border-line bg-surface p-1.5 shadow-pop animate-slide-up">
-          <div className="px-3 py-2">
-            <div className="text-[13px] font-semibold">{me.name}</div>
-            <div className="text-[12px] text-ink2">{viewAs === 'builder' ? email || me.email : `${me.email} · demo view`}</div>
-            <div className="mt-1 text-[11.5px] text-ink3">{authMode === 'demo' ? 'Demo sign-in · saved in this browser' : 'Your account · saved to the database'}</div>
-          </div>
-          <Link href="/tour" onClick={() => setOpen(false)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-sunken">
-            <Compass className="h-4 w-4 text-ink2" /> Take the guided tour
-          </Link>
-          <button
-            onClick={() => {
-              if (authMode === 'account') {
-                if (confirm('Start over? This deletes the projects saved in your account.')) {
-                  useApp.setState({ projects: [], audit: [] });
-                  router.push('/home');
-                }
-              } else if (confirm('Reset the demo? This clears projects and decisions saved in this browser.')) {
-                resetDemo();
-                router.push('/');
-              }
-            }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-sunken"
-          >
-            <RotateCcw className="h-4 w-4 text-ink2" /> {authMode === 'account' ? 'Start over' : 'Reset demo data'}
-          </button>
-          <button
-            onClick={async () => {
-              if (authMode === 'account') {
-                await logOutRequest().catch(() => undefined);
-                await useServer.getState().refresh();
-                resetDemo();
-              } else signOut();
-              router.push('/');
-            }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] hover:bg-sunken"
-          >
-            <LogOut className="h-4 w-4 text-ink2" /> Sign out
-          </button>
+    <Menu
+      align="end"
+      width={264}
+      label="Account"
+      header={
+        <div className="border-b border-line px-2.5 pb-2.5 pt-1.5">
+          <div className="text-[13.5px] font-semibold">{me.name}</div>
+          <div className="truncate text-[12.5px] text-ink3">{viewAs === 'builder' ? email || me.email : me.email}</div>
+          <div className="mt-1 text-[12px] text-ink3">{authMode === 'demo' ? 'Demo · saved in this browser' : 'Your account · saved to the database'}</div>
         </div>
+      }
+      items={[
+        { id: 'tour', label: 'Take the guided tour', icon: <Compass className="h-4 w-4" />, onSelect: () => router.push('/tour') },
+        { id: 'keys', label: 'Search and commands', icon: <Keyboard className="h-4 w-4" />, sub: 'Press ⌘K or Ctrl K anywhere', onSelect: () => usePalette.getState().setOpen(true) },
+        {
+          id: 'reset',
+          label: authMode === 'account' ? 'Start over' : 'Reset the demo',
+          icon: <RotateCcw className="h-4 w-4" />,
+          onSelect: () => {
+            if (authMode === 'account') {
+              if (confirm('Start over? This deletes the projects saved in your account.')) {
+                useApp.setState({ projects: [], audit: [] });
+                router.push('/home');
+              }
+            } else if (confirm('Reset the demo? This clears the projects and decisions saved in this browser.')) {
+              resetDemo();
+              router.push('/');
+            }
+          },
+        },
+        {
+          id: 'out',
+          label: 'Sign out',
+          icon: <LogOut className="h-4 w-4" />,
+          onSelect: async () => {
+            if (authMode === 'account') {
+              await logOutRequest().catch(() => undefined);
+              await useServer.getState().refresh();
+              resetDemo();
+            } else signOut();
+            router.push('/');
+          },
+        },
+      ]}
+      trigger={({ open, toggle }) => (
+        <button type="button" onClick={toggle} aria-label="Account menu" aria-expanded={open} className="press rounded-full">
+          <Avatar initials={me.initials} size={32} tone={roleTone(viewAs)} />
+        </button>
       )}
-    </div>
+    />
   );
 }
 
@@ -177,7 +171,7 @@ export function SaveBadge() {
   const label = save.status === 'saving' ? 'Saving…' : save.status === 'error' ? 'Not saved yet' : 'Saved';
   return (
     <span
-      className={cn('hidden items-center gap-1.5 text-[12px] md:flex', save.status === 'error' ? 'text-bad' : 'text-ink2')}
+      className={cn('hidden items-center gap-1.5 text-[12.5px] md:flex', save.status === 'error' ? 'text-bad' : 'text-ink3')}
       title={save.status === 'error' ? 'Could not reach the database. It will try again with your next change.' : 'Your work is saved to your account'}
     >
       {save.status === 'saving' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : save.status === 'error' ? <CloudOff className="h-3.5 w-3.5" /> : <CloudCheck className="h-3.5 w-3.5" />}
@@ -186,95 +180,158 @@ export function SaveBadge() {
   );
 }
 
-export function WorkspaceBar({ right }: { right?: ReactNode }) {
-  const ws = useApp((s) => s.workspace);
-  const pathname = usePathname();
-  const viewAs = useApp((s) => s.viewAs);
-  const items = [
-    { href: '/home', label: 'Home' },
-    { href: '/settings', label: viewAs === 'approver' ? 'Launch rules' : 'Settings' },
-  ];
+export function SearchButton({ compact }: { compact?: boolean }) {
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-5 border-b border-line bg-surface px-5">
-      <Logo />
-      <div className="hidden h-8 items-center rounded-lg border border-line bg-surface2 px-2.5 text-[13px] font-medium md:flex">{ws?.name ?? 'Workspace'}</div>
-      <nav aria-label="Workspace" className="flex h-14 items-stretch">
-        {items.map((i) => {
-          const active = pathname === i.href || (i.href !== '/home' && pathname.startsWith(i.href));
-          return (
-            <Link
-              key={i.href}
-              href={i.href}
-              className={cn(
-                'flex items-center border-b-2 px-3.5 text-[14px]',
-                active ? 'border-accent font-semibold text-ink' : 'border-transparent text-ink2 hover:text-ink',
-              )}
-            >
-              {i.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="flex-1" />
-      {right}
-      <SaveBadge />
-      {ws && viewAs === 'builder' && <UsageButton />}
-      <ViewAsSwitch />
-      <UserMenu />
+    <button
+      type="button"
+      onClick={() => usePalette.getState().setOpen(true)}
+      data-tour="palette"
+      className={cn(
+        'press flex h-9 items-center gap-2 rounded-[10px] border border-line bg-surface2 text-[13px] text-ink3 hover:border-line2 hover:text-ink',
+        compact ? 'w-9 justify-center' : 'px-2.5',
+      )}
+      aria-label="Search and commands"
+    >
+      <Search className="h-4 w-4" />
+      {!compact && (
+        <>
+          <span className="hidden md:inline">Search</span>
+          <Kbd className="hidden md:inline-flex">⌘K</Kbd>
+        </>
+      )}
+    </button>
+  );
+}
+
+/** The bar across the top of every screen. */
+export function TopBar({ left, center, right, className }: { left: ReactNode; center?: ReactNode; right?: ReactNode; className?: string }) {
+  return (
+    <header className={cn('sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg/85 px-3 backdrop-blur-md sm:px-4', className)}>
+      <div className="flex min-w-0 items-center gap-2.5">{left}</div>
+      <div className="flex min-w-0 flex-1 items-center justify-center">{center}</div>
+      <div className="flex shrink-0 items-center gap-2">{right}</div>
     </header>
   );
 }
 
-/** Architect's usage panel: what this month's credits went on, by build step. */
-export function UsageButton() {
-  const ws = useApp((s) => s.workspace);
-  const projects = useApp((s) => s.projects);
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useClickOutside(ref, () => setOpen(false));
-  if (!ws) return null;
+/** Credits used this month, by kind of work. */
+export function usageRows(projects: Project[]): { label: string; n: number; what: string }[] {
   const builds = projects.filter((p) => p.build.status === 'done').length;
   const testing = projects.reduce((n, p) => n + p.runs.reduce((m, r) => m + r.credits, 0), 0);
   const changes = projects.reduce((n, p) => n + p.changes.reduce((m, c) => m + c.credits, 0), 0);
-  const rows: [string, number, string][] = [
-    ['Plan', builds * 10 + 60, 'the questions and the one-page plan'],
-    ['Agent creator', builds * 40 + 240, 'writing and wiring the agents'],
-    ['UI generation', builds * 50 + 300, 'the app screens'],
-    ['Build', builds * 40 + changes + 180, 'code, fixes and framework switches'],
-    ['Testing', testing + 80, 'every test run against the Answer Key'],
+  return [
+    { label: 'Plans', n: builds * 10 + 60, what: 'The questions and the one-page plan' },
+    { label: 'Agents', n: builds * 40 + 240, what: 'Writing and wiring the agents' },
+    { label: 'Screens', n: builds * 50 + 300, what: 'The app screens' },
+    { label: 'Code and fixes', n: builds * 40 + changes + 180, what: 'Code, fixes and framework switches' },
+    { label: 'Test runs', n: testing + 80, what: 'Every run against the Answer Key' },
   ];
-  const used = rows.reduce((n, r) => n + r[1], 0);
+}
+
+function CreditsMeter({ ws }: { ws: Workspace }) {
+  const total = 2000;
   return (
-    <div ref={ref} className="relative hidden lg:block">
-      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="rounded-md px-1.5 py-1 text-[12.5px] text-ink2 hover:bg-sunken hover:text-ink">
-        Credits · {ws.credits.toLocaleString('en-US')}
-      </button>
-      {open && (
-        <div className="absolute right-0 top-10 z-40 w-[320px] rounded-xl border border-line bg-surface p-4 shadow-pop animate-slide-up">
-          <div className="flex items-baseline justify-between">
-            <span className="text-[14px] font-semibold">Usage this month</span>
-            <span className="font-mono text-[12.5px] text-ink2">{used.toLocaleString('en-US')} credits</span>
-          </div>
-          <ul className="mt-3 grid gap-2.5">
-            {rows.map(([label, n, what]) => (
-              <li key={label}>
-                <div className="flex items-baseline justify-between text-[13px]">
-                  <span className="font-medium">{label}</span>
-                  <span className="font-mono text-[12px] text-ink2">{n.toLocaleString('en-US')}</span>
-                </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunken">
-                  <div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(3, (n / used) * 100)}%` }} />
-                </div>
-                <div className="mt-0.5 text-[11.5px] text-ink3">{what}</div>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 border-t border-line pt-2.5 text-[12px] text-ink2">
-            {ws.credits.toLocaleString('en-US')} credits left. Every build and test run shows its cost before it starts.
-          </p>
-        </div>
-      )}
+    <Link href="/usage" className="press block rounded-xl border border-line bg-surface p-3 hover:border-line2">
+      <div className="flex items-baseline justify-between text-[12.5px]">
+        <span className="text-ink3">Credits left</span>
+        <b className="tabular font-semibold text-ink">{ws.credits.toLocaleString('en-US')}</b>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line2">
+        <div className="h-full rounded-full bg-accent transition-[width] duration-700 ease-out" style={{ width: `${Math.min(100, (ws.credits / total) * 100)}%` }} />
+      </div>
+    </Link>
+  );
+}
+
+const NAV = [
+  { href: '/home', label: 'Home', icon: Home },
+  { href: '/projects', label: 'Projects', icon: FolderKanban },
+  { href: '/usage', label: 'Usage', icon: Gauge },
+  { href: '/settings', label: 'Settings', icon: Settings },
+];
+
+/** Home, Projects, Usage and Settings share this frame: a top bar and a short side menu. */
+export function AppShell({ children }: { children: ReactNode }) {
+  const ws = useApp((s) => s.workspace);
+  const viewAs = useApp((s) => s.viewAs);
+  const pathname = usePathname();
+  const nav = NAV.filter((n) => viewAs === 'builder' || n.href === '/home' || n.href === '/settings').map((n) =>
+    n.href === '/settings' && viewAs === 'approver' ? { ...n, label: 'Launch rules' } : n,
+  );
+  return (
+    <div className="flex min-h-screen flex-col">
+      <TopBar
+        left={
+          <>
+            <Logo />
+            {ws && <span className="hidden truncate rounded-lg border border-line bg-surface px-2.5 py-1 text-[13px] text-ink2 md:inline">{ws.name}</span>}
+          </>
+        }
+        right={
+          <>
+            <SaveBadge />
+            <SearchButton />
+            <PersonSwitch />
+            <UserMenu />
+          </>
+        }
+      />
+      <nav aria-label="Main" className="flex gap-1 overflow-x-auto border-b border-line px-3 py-2 md:hidden">
+        {nav.map((n) => (
+          <Link
+            key={n.href}
+            href={n.href}
+            aria-current={pathname.startsWith(n.href) ? 'page' : undefined}
+            className={cn('press rounded-lg px-3 py-1.5 text-[13.5px]', pathname.startsWith(n.href) ? 'bg-surface2 font-medium text-ink' : 'text-ink2')}
+          >
+            {n.label}
+          </Link>
+        ))}
+      </nav>
+      <div className="flex flex-1">
+        <aside className="sticky top-14 hidden h-[calc(100vh-56px)] w-[220px] shrink-0 flex-col justify-between border-r border-line p-3 md:flex">
+          <nav aria-label="Main" className="flex flex-col gap-0.5">
+            {nav.map((n) => {
+              const on = pathname.startsWith(n.href);
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  aria-current={on ? 'page' : undefined}
+                  className={cn(
+                    'press flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] transition-colors',
+                    on ? 'bg-surface2 font-medium text-ink' : 'text-ink2 hover:bg-surface hover:text-ink',
+                  )}
+                >
+                  <n.icon className={cn('h-4 w-4', on ? 'text-accent' : 'text-ink3')} />
+                  {n.label}
+                </Link>
+              );
+            })}
+          </nav>
+          {ws && viewAs === 'builder' && <CreditsMeter ws={ws} />}
+        </aside>
+        <main className="min-w-0 flex-1">{children}</main>
+      </div>
     </div>
+  );
+}
+
+/** Old header, kept so older screens keep working while they move to AppShell. */
+export function WorkspaceBar({ right }: { right?: ReactNode }) {
+  return (
+    <TopBar
+      left={<Logo />}
+      right={
+        <>
+          {right}
+          <SaveBadge />
+          <SearchButton />
+          <PersonSwitch />
+          <UserMenu />
+        </>
+      }
+    />
   );
 }
 
@@ -287,33 +344,85 @@ export function Toaster() {
   }, [toasts, dismiss]);
   if (!toasts.length) return null;
   return (
-    <div className="pointer-events-none fixed bottom-5 left-1/2 z-[60] flex w-max max-w-[calc(100vw-32px)] -translate-x-1/2 flex-col items-center gap-2" aria-live="polite">
+    <div className="pointer-events-none fixed bottom-5 left-1/2 z-[70] flex w-max max-w-[calc(100vw-24px)] -translate-x-1/2 flex-col items-center gap-2" aria-live="polite">
       {toasts.slice(-3).map((t) => (
-        <ToastItem key={t.id} id={t.id} text={t.text} tone={t.tone} onDone={dismiss} />
+        <ToastItem key={t.id} t={t} onDone={dismiss} />
       ))}
     </div>
   );
 }
 
-function ToastItem({ id, text, tone, onDone }: { id: string; text: string; tone: 'neutral' | 'ok' | 'bad'; onDone: (id: string) => void }) {
+function ToastItem({ t, onDone }: { t: ToastMsg; onDone: (id: string) => void }) {
+  const ms = t.ms ?? (t.actions?.length ? 7000 : 3600);
+  const [paused, setPaused] = useState(false);
+  const left = useRef(ms);
   useEffect(() => {
-    const t = setTimeout(() => onDone(id), 3600);
-    return () => clearTimeout(t);
-  }, [id, onDone]);
+    if (paused) return;
+    const started = Date.now();
+    const timer = window.setTimeout(() => onDone(t.id), left.current);
+    return () => {
+      window.clearTimeout(timer);
+      left.current = Math.max(400, left.current - (Date.now() - started));
+    };
+  }, [paused, onDone, t.id]);
   return (
     <div
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
       className={cn(
-        'pointer-events-auto flex items-center gap-2 rounded-xl border px-4 py-2.5 text-[13.5px] shadow-pop animate-slide-up',
-        tone === 'ok' ? 'border-ok-line bg-surface text-ink' : tone === 'bad' ? 'border-bad-line bg-bad-soft text-bad' : 'border-line bg-ink text-bg',
+        'pointer-events-auto relative flex items-center gap-3 overflow-hidden rounded-xl border py-2.5 pl-3.5 pr-2 text-[14px] shadow-pop animate-toast-in',
+        t.tone === 'bad' ? 'border-bad-line bg-bad-soft text-ink' : 'border-line2 bg-surface2 text-ink',
       )}
+      role="status"
     >
-      {tone === 'ok' && <Check className="h-4 w-4 shrink-0 text-ok" />}
-      {text}
+      {t.tone === 'ok' && (
+        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ok text-on-ok">
+          <Check className="h-3 w-3" strokeWidth={3} />
+        </span>
+      )}
+      <span className="pr-1">{t.text}</span>
+      {t.actions?.map((a) => (
+        <button
+          key={a.label}
+          type="button"
+          onClick={() => {
+            a.run();
+            onDone(t.id);
+          }}
+          className={cn(
+            'press h-8 shrink-0 rounded-lg px-2.5 text-[13.5px] font-medium',
+            a.primary ? 'bg-accent text-on-accent hover:brightness-110' : 'text-accent-ink hover:bg-sunken',
+          )}
+        >
+          {a.label}
+        </button>
+      ))}
+      <button type="button" onClick={() => onDone(t.id)} aria-label="Dismiss" className="press grid h-7 w-7 shrink-0 place-items-center rounded-lg text-ink3 hover:bg-sunken hover:text-ink">
+        <X className="h-3.5 w-3.5" />
+      </button>
+      {!!t.actions?.length && (
+        <span
+          aria-hidden
+          className="absolute bottom-0 left-0 h-[2px] w-full origin-left bg-accent/70"
+          style={{ animation: `countdown ${ms}ms linear forwards`, animationPlayState: paused ? 'paused' : 'running' }}
+        />
+      )}
     </div>
   );
 }
 
-/** Renders children only after the saved state loads, and sends signed-out visitors to sign-in. */
+export function Loading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center gap-3 text-[13.5px] text-ink3">
+        <LogoMark size={22} />
+        <span className="animate-pulse2">Loading…</span>
+      </div>
+    </div>
+  );
+}
+
+/** Renders children only after the saved state loads, and sends signed-out visitors to sign in. */
 export function RequireAuth({ children, needWorkspace = true }: { children: ReactNode; needWorkspace?: boolean }) {
   const ready = useHydrated();
   const signedIn = useApp((s) => s.signedIn);
@@ -321,17 +430,9 @@ export function RequireAuth({ children, needWorkspace = true }: { children: Reac
   const router = useRouter();
   useEffect(() => {
     if (!ready) return;
-    if (!signedIn) router.replace('/');
+    if (!signedIn) router.replace('/signin');
     else if (needWorkspace && !ws) router.replace('/setup');
   }, [ready, signedIn, ws, needWorkspace, router]);
-  if (!ready || !signedIn || (needWorkspace && !ws)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex items-center gap-3 text-[13px] text-ink2">
-          <LogoMark size={22} /> Loading…
-        </div>
-      </div>
-    );
-  }
+  if (!ready || !signedIn || (needWorkspace && !ws)) return <Loading />;
   return <>{children}</>;
 }

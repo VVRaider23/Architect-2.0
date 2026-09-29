@@ -5,6 +5,7 @@ import './globals.css';
 import { Toaster } from '@/components/shell';
 import { SyncState } from '@/components/sync';
 import { TourCard } from '@/components/tour';
+import { CommandPalette } from '@/components/palette';
 
 export const metadata: Metadata = {
   title: 'Architect 2.0 · Build it. Prove it. Ship it.',
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-bg font-sans text-ink antialiased">
         {children}
         <Toaster />
+        <CommandPalette />
         <TourCard />
         <SyncState />
       </body>

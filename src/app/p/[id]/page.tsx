@@ -1,27 +1,51 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import { useProject } from '@/lib/store';
-import { resolveTab } from '@/lib/stage';
-import { RequireAuth } from '@/components/shell';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
+import { useApp } from '@/lib/store';
+import { useHydrated } from '@/lib/hooks';
+import { screenFor } from '@/lib/routes';
+import { Loading } from '@/components/shell';
 import { MissingProject } from '@/components/missing';
-import { ProjectWorkspace } from '@/components/project/workspace';
 
-export default function ProjectPage() {
+/** Old links used ?tab=…; each tab now has its own screen. */
+const LEGACY: Record<string, string> = {
+  plan: 'plan',
+  preview: 'app',
+  agents: 'agents',
+  code: 'code',
+  proof: 'prove',
+  signoff: 'signoff',
+  launch: 'signoff',
+  ship: 'ship',
+  live: 'learn',
+};
+
+export default function ProjectIndex() {
   return (
-    <RequireAuth>
-      <Suspense>
-        <Project />
-      </Suspense>
-    </RequireAuth>
+    <Suspense fallback={<Loading />}>
+      <Redirect />
+    </Suspense>
   );
 }
 
-function Project() {
+function Redirect() {
   const { id } = useParams<{ id: string }>();
   const search = useSearchParams();
-  const p = useProject(id);
-  if (!p) return <MissingProject />;
-  return <ProjectWorkspace p={p} initialTab={resolveTab(search.get('tab'), p)} />;
+  const ready = useHydrated();
+  const router = useRouter();
+  const signedIn = useApp((s) => s.signedIn);
+  const viewAs = useApp((s) => s.viewAs);
+  const p = useApp((s) => s.projects.find((x) => x.id === id));
+
+  useEffect(() => {
+    if (!ready) return;
+    if (!signedIn) return router.replace('/signin');
+    if (!p) return;
+    const tab = search.get('tab');
+    router.replace(tab && LEGACY[tab] && viewAs === 'builder' ? `/p/${p.id}/${LEGACY[tab]}` : screenFor(p, viewAs));
+  }, [ready, signedIn, p, viewAs, search, router]);
+
+  if (ready && signedIn && !p) return <MissingProject />;
+  return <Loading />;
 }

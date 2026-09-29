@@ -5,11 +5,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { create } from 'zustand';
 import { ArrowRight, Compass, Minus, X } from 'lucide-react';
 import { useApp, type ReviewInput } from '@/lib/store';
-import { useUI } from '@/lib/ui';
 import { latestRun } from '@/lib/engine';
-import { AUDIENCES, CONDITIONS, approvedFor, openTasks, pendingRequest } from '@/lib/stage';
+import { AUDIENCES, CONDITIONS, approvedFor, pendingRequest } from '@/lib/stage';
 import { PEOPLE } from '@/lib/seed';
-import type { Project, Role, Tab } from '@/lib/types';
+import type { Project, Role } from '@/lib/types';
 import { Avatar, Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -44,7 +43,8 @@ export const useTour = create<TourState>()((set) => ({
 const app = () => useApp.getState();
 const find = (pid: string) => app().projects.find((p) => p.id === pid);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const home = (p: Project) => `/p/${p.id}`;
+const at = (p: Project, screen: string) => `/p/${p.id}/${screen}`;
+const lastChange = (p: Project) => [...p.changes].reverse().find((c) => !c.undone);
 
 const TONE: Record<Role, 'accent' | 'ok' | 'warn'> = { builder: 'accent', reviewer: 'ok', approver: 'warn' };
 const WHO: Record<Role, string> = {
@@ -62,7 +62,6 @@ interface Step {
   body: (p: Project) => ReactNode;
   as: Role;
   path: (p: Project) => string;
-  tab?: Tab;
   /** The element to highlight: its data-tour name. */
   target?: string;
   cta: string;
@@ -110,236 +109,211 @@ const STEPS: Step[] = [
             [
               ['builder', 'builds the app with Architect'],
               ['reviewer', 'claims expert: checks the answers'],
-              ['approver', 'IT: approves what goes live'],
+              ['approver', 'IT: approves who can use it'],
             ] as const
           ).map(([role, does]) => {
             const person = PEOPLE.find((x) => x.role === role)!;
             return (
               <span key={role} className="flex items-center gap-2.5">
                 <Avatar initials={person.initials} size={28} tone={TONE[role]} />
-                <span className="text-[13px] leading-tight">
+                <span className="text-[13.5px] leading-tight">
                   <b className="text-ink">{person.short}</b> <span className="text-ink2">{does}</span>
                 </span>
               </span>
             );
           })}
         </span>
-        <span className="mt-2.5 block">You will play all three. The highlighted menu switches between them.</span>
+        <span className="mt-2.5 block">You play all three. The highlighted switch changes who you are.</span>
       </>
     ),
     as: 'builder',
-    path: home,
-    tab: 'plan',
+    path: (p) => at(p, 'questions'),
     target: 'person-switch',
     cta: 'Start',
   },
   {
-    id: 'plan',
+    id: 'questions',
     chapter: 'Build',
-    title: 'Describe it, get a plan',
-    body: () => (
-      <>
-        Arjun described the app in one sentence (it is in the chat on the left). Architect asked three quick questions. Now it drafts a one-page plan, like a product
-        manager would.
-      </>
-    ),
+    title: 'Three quick questions',
+    body: () => <>Arjun described the app in one sentence. Architect asks three questions, one at a time. Press 1, 2 or 3, or let the tour answer.</>,
     as: 'builder',
-    path: home,
-    tab: 'plan',
-    target: 'next-action',
-    cta: 'Draft the plan',
-    act: (p) => app().draftPlan(p.id),
+    path: (p) => at(p, 'questions'),
+    target: 'q-first',
+    cta: 'Answer them for me',
+    act: (p) => {
+      app().answerConsultant(p.id, { users: ['Claims handlers'], systems: ['Gmail', 'Claims database', 'Policy PDFs'], risky: '' });
+      app().setFramework(p.id, 'langgraph');
+      app().draftPlan(p.id);
+    },
     done: (p) => !!p.plan,
   },
   {
-    id: 'approve',
+    id: 'plan',
     chapter: 'Build',
-    title: 'Nothing is built until you approve',
-    body: () => <>The plan lists the screens, the AI agents, what each agent may touch, and three example answers. Arjun reads it and approves.</>,
+    title: 'Nothing is built until you say so',
+    body: () => <>The plan is four plain steps. Arjun can change the framework or an answer. When it looks right, he presses Build it.</>,
     as: 'builder',
-    path: home,
-    tab: 'plan',
-    target: 'next-action',
-    cta: 'Approve and build',
+    path: (p) => at(p, 'plan'),
+    target: 'plan-approve',
+    cta: 'Build it',
     act: (p) => app().approvePlan(p.id),
     done: (p) => p.planApproved,
   },
   {
     id: 'build',
     chapter: 'Build',
-    title: 'Architect builds it',
-    body: () => <>It writes the agents, the app screens and the code, then tests the app straight away. This takes about 20 seconds, or you can skip ahead.</>,
+    title: 'Watch it build',
+    body: () => <>A drawing of the app fills in as Architect writes the agents, the screens and the code, then tests it. About 20 seconds, or skip ahead.</>,
     as: 'builder',
-    path: home,
-    tab: 'preview',
-    target: 'next-action',
-    cta: 'Skip to the finished app',
+    path: (p) => at(p, 'build'),
+    target: 'build-skip',
+    cta: 'Skip the wait',
     act: (p) => app().skipBuild(p.id),
     done: (p) => p.build.status === 'done',
   },
   {
-    id: 'app',
+    id: 'ready',
     chapter: 'Build',
-    title: 'The app, in test mode',
+    title: 'Did it work?',
     body: (p) => {
       const run = latestRun(p);
-      const miss = run ? run.total - run.passed : 0;
       return (
         <>
-          Test mode runs example claims through the app and compares each answer with the answer an expert expects.{' '}
+          Architect checked every answer against examples an expert would give.{' '}
           <b className="text-ink">
             {run?.passed} of {run?.total}
           </b>{' '}
-          match. The {miss} misses are all theft claims.
+          match. The misses are all theft claims.
         </>
       );
     },
     as: 'builder',
-    path: home,
-    tab: 'preview',
-    target: 'test-bar',
+    path: (p) => at(p, 'ready'),
+    target: 'ready-score',
     cta: 'Next',
   },
   {
-    id: 'prove',
+    id: 'invite',
     chapter: 'Prove',
-    title: 'Who decides what is right?',
-    body: () => (
-      <>
-        The expected answers live in the <b className="text-ink">Answer Key</b>. Arjun is an engineer, not a claims expert, so he invites Meera, the claims lead, to check them.
-        She never sees code.
-      </>
-    ),
+    title: 'Only an expert can say it is right',
+    body: () => <>Arjun is not a claims expert, so he asks Meera. She checks the answers in plain words and never sees code.</>,
     as: 'builder',
-    path: home,
-    tab: 'proof',
-    target: 'next-action',
+    path: (p) => at(p, 'prove'),
+    target: 'ask-meera',
     cta: 'Invite Meera',
-    act: (p) =>
-      app().invite(
-        p.id,
-        [
-          { email: 'meera.k@harborline.com', role: 'reviewer', at: Date.now() },
-          { email: 'farah.s@harborline.com', role: 'approver', at: Date.now() },
-        ],
-        'Meera, could you check these answers? Your corrections become tests.',
-      ),
+    act: (p) => app().invite(p.id, [{ email: 'meera.k@harborline.com', role: 'reviewer', at: Date.now() }], ''),
     done: (p) => p.tasks.length > 0,
   },
   {
     id: 'review',
     chapter: 'Prove',
-    title: 'Now you are Meera',
-    body: () => (
-      <>
-        Meera sees each answer in plain words and marks it <b className="text-ok">right</b> or <b className="text-bad">wrong</b>. When it is wrong, she writes the right
-        answer, and it becomes a new test the app must pass.
-      </>
-    ),
+    title: 'Meera checks the answers',
+    body: () => <>Right, wrong or not sure, with the keys R, W and N. When she says wrong, she picks what it should have said, and that becomes a new test.</>,
     as: 'reviewer',
-    path: (p) => `/p/${p.id}/review`,
+    path: (p) => at(p, 'review'),
     target: 'review-buttons',
-    cta: 'Review them all for me',
+    cta: 'Check them for me',
     act: (p) => reviewAll(p.id),
-    done: (p) => p.reviews.length > 0 && openTasks(p).length === 0,
+    done: (p) => p.tasks.length > 0 && p.tasks.every((t) => t.done),
   },
   {
     id: 'fix',
     chapter: 'Prove',
-    title: 'Back to Arjun: fix it',
-    body: (p) => {
-      const run = latestRun(p);
-      const miss = run ? run.total - run.passed : 0;
-      return (
-        <>
-          Meera’s corrections pinned down the problem: theft claims need a police report number. {miss} examples fail. Arjun asks Architect to fix them, and gets a
-          receipt: what changed, what got fixed, what broke.
-        </>
-      );
-    },
+    title: 'Fix what is wrong',
+    body: () => <>Meera’s corrections show the rule the app missed: theft needs a police report. One button fixes it and runs every test again. There is an Undo if it goes wrong.</>,
     as: 'builder',
-    path: home,
-    tab: 'proof',
-    target: 'next-action',
-    cta: 'Fix the failing examples',
-    act: (p) => app().sendChat(p.id, 'Fix the misses: theft claims need a police report number before approval.'),
-    done: (p) => p.version >= 2,
+    path: (p) => at(p, 'prove'),
+    target: 'fix-all',
+    cta: 'Fix them',
+    act: (p) => {
+      app().fixFailing(p.id);
+    },
+    done: (p) => {
+      const run = latestRun(p);
+      return !!run && run.passed === run.total && p.changes.length > 0;
+    },
+  },
+  {
+    id: 'merge',
+    chapter: 'Prove',
+    title: 'Every change is a pull request',
+    body: () => <>The fix arrives as a pull request with its checks: the Answer Key, the unit tests and Meera’s new tests. Merge it when they pass.</>,
+    as: 'builder',
+    path: (p) => {
+      const ch = lastChange(p);
+      return ch ? at(p, `pr/${ch.id}`) : at(p, 'prove');
+    },
+    target: 'pr-merge',
+    cta: 'Merge it',
+    act: async (p) => {
+      const ch = lastChange(p);
+      if (!ch) return;
+      await sleep(1900);
+      app().mergeChange(p.id, ch.id);
+    },
+    done: (p) => !!lastChange(p)?.merged,
   },
   {
     id: 'signoff',
     chapter: 'Sign off',
-    title: 'Ask IT to sign off',
-    body: () => (
-      <>
-        Every launch rule passes now. Arjun sends a <b className="text-ink">Launch Pack</b> to Farah, who looks after IT and security: one page of evidence, put together
-        automatically.
-      </>
-    ),
+    title: 'Ask IT for a small launch',
+    body: () => <>Every launch rule has a tick. Arjun asks Farah to let the claims team, 12 people, use it on Test.</>,
     as: 'builder',
-    path: home,
-    tab: 'signoff',
-    target: 'next-action',
-    cta: 'Send it to Farah',
-    act: (p) => void app().requestSignoff(p.id, 'test', AUDIENCES[0]),
+    path: (p) => at(p, 'signoff'),
+    target: 'send-signoff',
+    cta: 'Send to Farah',
+    act: (p) => {
+      app().requestSignoff(p.id, 'test', AUDIENCES[0]);
+    },
     done: (p) => !!pendingRequest(p) || !!approvedFor(p, 'test'),
   },
   {
     id: 'decide',
     chapter: 'Sign off',
-    title: 'Now you are Farah',
-    body: () => (
-      <>
-        She sees the test results, Meera’s review, what data the app can touch and what it costs, on one page. She approves a pilot for the claims team, with
-        conditions.
-      </>
-    ),
+    title: 'Farah decides from one page',
+    body: () => <>Every line comes from test runs and Meera’s checks, not from Arjun. She can add conditions, then approve.</>,
     as: 'approver',
     path: (p) => {
-      const r = pendingRequest(p) ?? p.requests[p.requests.length - 1];
-      return r ? `/p/${p.id}/requests/${r.id}` : home(p);
+      const r = pendingRequest(p) ?? [...p.requests].reverse()[0];
+      return r ? at(p, `requests/${r.id}`) : at(p, 'requests');
     },
-    target: 'decision',
-    cta: 'Approve the pilot',
+    target: 'farah-approve',
+    cta: 'Approve it',
     act: (p) => {
       const r = pendingRequest(p);
-      if (r) app().decide(p.id, r.id, 'approved_conditions', CONDITIONS.test.slice(0, 2), 'Good evidence. Start with the claims team only.');
+      if (r) app().decide(p.id, r.id, 'approved_conditions', [CONDITIONS.test[1]], '');
     },
     done: (p) => !!approvedFor(p, 'test'),
   },
   {
     id: 'ship',
     chapter: 'Ship',
-    title: 'Deploy to a pilot group',
-    body: (p) => (
-      <>
-        Back to Arjun. He deploys v{p.version} to <b className="text-ink">Test</b>, where the claims team uses it for real. Going Live works the same way, with one more
-        approval from Farah.
-      </>
-    ),
+    title: 'Deploy to the pilot group',
+    body: () => <>Farah approved Test for the claims team. Live stays locked until she approves that too.</>,
     as: 'builder',
-    path: home,
-    tab: 'ship',
+    path: (p) => at(p, 'ship'),
     target: 'deploy-test',
     cta: 'Deploy to Test',
-    act: (p) => void app().deploy(p.id, 'test'),
-    done: (p) => p.deployments.test.status === 'running',
+    act: (p) => {
+      app().deploy(p.id, 'test');
+    },
+    done: (p) => p.deployments.test.status === 'running' && p.deployments.test.version === p.version,
   },
   {
     id: 'learn',
     chapter: 'Learn',
-    title: 'People flag wrong answers',
-    body: () => (
-      <>
-        Pilot users can flag an answer they think is wrong. Flags land here. Meera checks each one, and her correction becomes a new test, so the same mistake cannot
-        come back.
-      </>
-    ),
+    title: 'People flag what looks wrong',
+    body: () => <>Claims handlers flagged two water damage answers during the pilot. Each flag goes to Meera, and her answer becomes a test.</>,
     as: 'builder',
-    path: home,
-    tab: 'live',
-    target: 'flags',
-    cta: 'Next',
+    path: (p) => at(p, 'learn'),
+    target: 'flags-send',
     enter: (p) => app().arriveFlagsNow(p.id),
+    cta: 'Send them to Meera',
+    act: (p) => {
+      const now = Date.now();
+      for (const f of p.flags.filter((x) => x.at <= now && x.status === 'open')) app().sendFlagToReview(p.id, f.id);
+    },
+    done: (p) => p.flags.length > 0 && p.flags.every((f) => f.status !== 'open'),
   },
   {
     id: 'done',
@@ -347,15 +321,13 @@ const STEPS: Step[] = [
     title: 'That is the whole loop',
     body: () => (
       <>
-        <b className="text-ink">Build → Prove → Sign off → Ship → Learn.</b> Every change is tested against your experts’ examples, and nothing reaches real people
-        without the right sign-off. The steps bar at the top always shows where a project is.
+        Build, prove, sign off, ship, learn. From here Meera checks the flags, Arjun fixes water damage the same way, and Farah approves Live. Going live is press and hold, so it
+        never happens by accident.
       </>
     ),
     as: 'builder',
-    path: home,
-    tab: 'live',
-    target: 'journey',
-    cta: 'Build my own app',
+    path: (p) => at(p, 'learn'),
+    cta: 'Finish the tour',
   },
 ];
 
@@ -458,8 +430,7 @@ export function TourCard() {
     if (app().viewAs !== step.as) app().setViewAs(step.as);
     step.enter?.(proj);
     const path = step.path(proj);
-    if (window.location.pathname !== path) router.push(step.tab ? `${path}?tab=${step.tab}` : path);
-    else if (step.tab) useUI.getState().setTab(step.tab);
+    if (window.location.pathname !== path) router.push(path);
   }, [pid, i, step, router, pathname]);
 
   // Move on by itself once the step is complete, whoever clicked.
@@ -478,7 +449,7 @@ export function TourCard() {
   }, [pid, p, stop]);
 
   if (!pid || !p || !step) return null;
-  const hidden = pathname === '/' || pathname === '/setup';
+  const hidden = pathname === '/' || pathname === '/setup' || pathname === '/signin';
   if (hidden) return null;
 
   const last = i === STEPS.length - 1;
@@ -571,7 +542,7 @@ export function TourCard() {
               </Button>
             ) : (
               step.act &&
-              step.target && <span className="text-[12px] text-ink3">or click the highlighted {step.target === 'review-buttons' ? 'buttons' : 'button'} yourself</span>
+              step.target && <span className="text-[12.5px] text-ink3">or do it yourself on the page</span>
             )}
           </div>
         </div>

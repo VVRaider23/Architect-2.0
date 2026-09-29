@@ -25,6 +25,7 @@ import type {
   ReviewVerdict,
   Risk,
   Role,
+  ToastAction,
   ToastMsg,
   Verdict,
   Workspace,
@@ -167,6 +168,9 @@ export interface AppState {
   applyChange: (pid: string, kind: ChangeKind, fw?: FrameworkId) => string | null;
   undoChange: (pid: string, changeId: string) => void;
   openPullRequest: (pid: string, changeId: string) => void;
+  mergeChange: (pid: string, changeId: string) => void;
+  /** Fixes whatever the latest test run gets wrong (theft first, then water damage). Returns the change id. */
+  fixFailing: (pid: string) => string | null;
   recordPush: (pid: string, info: { repo: string; url: string; commitUrl: string }) => void;
   recordPullRequest: (pid: string, changeId: string, pr: { number: number; url: string }) => void;
   addExample: (pid: string, ex: NewExample) => void;
@@ -187,7 +191,7 @@ export interface AppState {
   toggleGuardrail: (pid: string, agentId: AgentId, gid: string) => void;
   updateRules: (patch: Partial<LaunchRules>) => void;
   askQuestion: (pid: string, text: string, from: Role) => void;
-  toast: (text: string, tone?: ToastMsg['tone']) => void;
+  toast: (text: string, tone?: ToastMsg['tone'], opts?: { actions?: ToastAction[]; ms?: number }) => void;
   dismissToast: (id: string) => void;
 }
 
@@ -779,6 +783,31 @@ export const useApp = create<AppState>()(
             pushAudit(s, 'Arjun', 'opened pull request', p.repo, `#${ch.pr} ${ch.title}`);
           }),
 
+        mergeChange: (pid, changeId) =>
+          withProject(pid, (p, s) => {
+            const ch = p.changes.find((c) => c.id === changeId);
+            if (!ch || ch.merged || ch.undone) return;
+            if (!ch.pr) ch.pr = 13 + p.changes.filter((c) => c.pr).length + 1;
+            ch.committed = true;
+            ch.merged = true;
+            msg(p, 'architect', `Merged pull request #${ch.pr} into main: ${ch.title}.`);
+            pushAudit(s, 'Arjun', 'merged pull request', p.repo, `#${ch.pr} ${ch.title}`);
+          }),
+
+        fixFailing: (pid) => {
+          let id: string | null = null;
+          withProject(pid, (p, s) => {
+            const kind: ChangeKind | null = p.version < 2 ? 'theft' : p.version < 3 ? 'water' : null;
+            if (!kind) return;
+            const ch = makeChange(s, p, kind);
+            if (!ch) return;
+            id = ch.id;
+            msg(p, 'architect', `Done: ${ch.title}. ${ch.fixed} fixed, ${ch.broke} broke.`, { type: 'receipt', changeId: ch.id });
+            pushAudit(s, 'Arjun', 'changed', p.name, `#${ch.n} ${ch.title} (${ch.before} → ${ch.after})`);
+          });
+          return id;
+        },
+
         recordPush: (pid, info) =>
           withProject(pid, (p, s) => {
             const first = !p.github;
@@ -1214,9 +1243,9 @@ export const useApp = create<AppState>()(
             pushAudit(s, who, 'asked a question', p.name, text.trim());
           }),
 
-        toast: (text, tone = 'neutral') =>
+        toast: (text, tone = 'neutral', opts) =>
           set((s) => {
-            s.toasts.push({ id: uid('t'), text, tone });
+            s.toasts.push({ id: uid('t'), text, tone, ...opts });
           }),
 
         dismissToast: (id) =>

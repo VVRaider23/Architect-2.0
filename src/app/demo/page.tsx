@@ -19,7 +19,7 @@ export default function DemoPage() {
     if (!app.signedIn) app.signIn('the demo link', undefined, 'demo');
     if (!useApp.getState().workspace) useApp.getState().setupWorkspace({ name: 'Harborline Insurance', domainJoin: true, runsOn: 'lyzr' });
     const id = useApp.getState().quickStartDemo();
-    router.replace(`/p/${id}?tab=preview`);
+    router.replace(`/p/${id}/ready`);
   }, [ready, router]);
 
   return (

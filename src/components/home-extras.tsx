@@ -1,53 +1,36 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { BookOpen, Bot, Check, ExternalLink, Lightbulb, Paperclip, Plus, Sparkles } from 'lucide-react';
 import { askAI, useServer } from '@/lib/account';
 import { PROMPT_LIBRARY, STUDIO_AGENTS, STUDIO_URL, cannedIdeas, type Idea, type StudioAgent } from '@/lib/catalog';
-import { useClickOutside } from '@/components/shell';
-import { Button, Modal, inputCls } from '@/components/ui';
+import { Button, Menu, Modal, inputCls } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 /** The prompt box's "+" menu, as in today's Architect: attach files, add Studio agents, browse the prompt library. */
 export function PlusMenu({ onAttach, onStudio, onLibrary }: { onAttach: () => void; onStudio: () => void; onLibrary: () => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useClickOutside(ref, () => setOpen(false));
-  const item = (icon: React.ReactNode, label: string, sub: string, fn: () => void) => (
-    <button
-      role="menuitem"
-      onClick={() => {
-        setOpen(false);
-        fn();
-      }}
-      className="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-sunken"
-    >
-      <span className="mt-0.5 text-accent">{icon}</span>
-      <span>
-        <span className="block text-[13px] font-medium">{label}</span>
-        <span className="block text-[12px] text-ink2">{sub}</span>
-      </span>
-    </button>
-  );
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Add to your prompt"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-line2 bg-surface text-ink2 hover:border-ink3 hover:text-ink"
-      >
-        <Plus className="h-4 w-4" />
-      </button>
-      {open && (
-        <div role="menu" className="absolute bottom-10 left-0 z-40 w-[280px] rounded-xl border border-line bg-surface p-1.5 shadow-pop animate-slide-up">
-          {item(<Paperclip className="h-4 w-4" />, 'Attach files', 'PDFs, spreadsheets or examples the app should use', onAttach)}
-          {item(<Bot className="h-4 w-4" />, 'Add Studio agents', 'Bring in agents you already built in Lyzr Studio', onStudio)}
-          {item(<BookOpen className="h-4 w-4" />, 'Prompt library', 'Ready-made prompts by team and task', onLibrary)}
-        </div>
+    <Menu
+      width={290}
+      label="Add to your prompt"
+      items={[
+        { id: 'attach', icon: <Paperclip className="h-4 w-4" />, label: 'Attach files', sub: 'PDFs, spreadsheets or examples the app should use', onSelect: onAttach },
+        { id: 'studio', icon: <Bot className="h-4 w-4" />, label: 'Add Studio agents', sub: 'Agents you already built in Lyzr Studio', onSelect: onStudio },
+        { id: 'library', icon: <BookOpen className="h-4 w-4" />, label: 'Prompt library', sub: 'Ready-made prompts by team and task', onSelect: onLibrary },
+      ]}
+      trigger={({ open, toggle }) => (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label="Add to your prompt"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className="press grid h-8 w-8 place-items-center rounded-lg border border-line2 bg-surface2 text-ink2 hover:border-ink3/60 hover:text-ink"
+        >
+          <Plus className={cn('h-4 w-4 transition-transform duration-200', open && 'rotate-45')} />
+        </button>
       )}
-    </div>
+    />
   );
 }
 

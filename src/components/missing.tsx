@@ -22,7 +22,7 @@ export function MissingProject({ what = 'project' }: { what?: string }) {
           variant="primary"
           onClick={() => {
             const id = quickStartDemo();
-            router.push(`/p/${id}?tab=proof`);
+            router.push(`/p/${id}/ready`);
           }}
         >
           Open a demo project

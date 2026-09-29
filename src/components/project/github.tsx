@@ -38,7 +38,7 @@ export function useGitHub(p: Project) {
   const [busy, setBusy] = useState<string | null>(null);
   const real = features.github;
   const canPush = !!user?.github?.canPush;
-  const connectHref = githubUrl('connect', `/p/${p.id}?tab=code`);
+  const connectHref = githubUrl('connect', `/p/${p.id}/code`);
   const repoName = p.github?.repo.split('/')[1] ?? p.repo.split('/')[1] ?? 'architect-app';
 
   const fail = (e: unknown) => {
