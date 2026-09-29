@@ -3,10 +3,11 @@
 import { useApp } from '@/lib/store';
 import { AppShell, RequireAuth, usageRows } from '@/components/shell';
 import { CountUp } from '@/components/ui';
+import { ShellSkeleton } from '@/components/skeletons';
 
 export default function UsagePage() {
   return (
-    <RequireAuth>
+    <RequireAuth fallback={<ShellSkeleton page="usage" />}>
       <AppShell>
         <Usage />
       </AppShell>

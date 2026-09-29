@@ -1,15 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { GitBranch } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { githubUrl, useServer } from '@/lib/account';
 import { Logo, RequireAuth, TopBar, UserMenu } from '@/components/shell';
 import { ActionButton, Button, Tag } from '@/components/ui';
+import { GetInSkeleton } from '@/components/skeletons';
 
 export default function SetupPage() {
   return (
-    <RequireAuth needWorkspace={false}>
+    <RequireAuth needWorkspace={false} fallback={<GetInSkeleton />}>
       <Setup />
     </RequireAuth>
   );

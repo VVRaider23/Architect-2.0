@@ -5,10 +5,11 @@ import { useApp } from '@/lib/store';
 import { AppShell, RequireAuth } from '@/components/shell';
 import { Button, Empty } from '@/components/ui';
 import { ProjectRow } from '@/components/project-row';
+import { ShellSkeleton } from '@/components/skeletons';
 
 export default function ProjectsPage() {
   return (
-    <RequireAuth>
+    <RequireAuth fallback={<ShellSkeleton page="list" />}>
       <AppShell>
         <Projects />
       </AppShell>

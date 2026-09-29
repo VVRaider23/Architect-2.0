@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Crosshair, ExternalLink, Monitor, Smartphone, X } from 'lucide-react';
 import { latestRun } from '@/lib/engine';

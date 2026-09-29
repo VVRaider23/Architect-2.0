@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import { LogoMark } from './shell';
 import { Button } from './ui';

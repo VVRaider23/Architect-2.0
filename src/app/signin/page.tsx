@@ -1,14 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { GitBranch, Mail } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
 import { githubUrl, logInRequest, signUpRequest, useServer } from '@/lib/account';
 import { enterAccount } from '@/lib/enter';
-import { Loading, Logo, TopBar } from '@/components/shell';
+import { Logo, TopBar } from '@/components/shell';
+import { GetInSkeleton, ShellSkeleton } from '@/components/skeletons';
 import { ActionButton, Button, Field, inputCls } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +18,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<GetInSkeleton />}>
       <SignIn />
     </Suspense>
   );
@@ -59,7 +61,9 @@ function SignIn() {
     if (emailOpen) setTimeout(() => emailRef.current?.focus(), 60);
   }, [emailOpen]);
 
-  if (!ready || signedIn || (loaded && user)) return <Loading />;
+  // Already in: show the shape of where we're heading while we get there.
+  if (ready && signedIn && ws) return <ShellSkeleton page="home" />;
+  if (!ready || signedIn || (loaded && user)) return <GetInSkeleton />;
 
   const next = () => router.push(useApp.getState().workspace ? '/home' : '/setup');
   const bad = (msg: string) => {

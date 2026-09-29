@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useEffect } from 'react';
 import { latestRun } from '@/lib/engine';
 import type { Project } from '@/lib/types';

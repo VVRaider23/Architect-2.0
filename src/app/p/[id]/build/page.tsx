@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useEffect, useState } from 'react';
 import { ArrowRight, FastForward } from 'lucide-react';
 import { BUILD_STEPS, STEP_MS, useApp } from '@/lib/store';

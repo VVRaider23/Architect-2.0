@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { Check, GitBranch, Search } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { githubUrl, listMyRepos, useServer } from '@/lib/account';
@@ -12,10 +12,11 @@ import { BackLink } from '@/components/frame';
 import { ActionButton, Button, Spinner } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import type { RepoAnalysis } from '@/app/api/github/analyze/route';
+import { ShellSkeleton } from '@/components/skeletons';
 
 export default function ImportPage() {
   return (
-    <RequireAuth>
+    <RequireAuth fallback={<ShellSkeleton page="list" />}>
       <AppShell>
         <Import />
       </AppShell>

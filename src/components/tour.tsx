@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { create } from 'zustand';
 import { ArrowRight, Compass, Minus, X } from 'lucide-react';
 import { useApp, type ReviewInput } from '@/lib/store';

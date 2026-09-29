@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { useRouter } from '@/lib/nav';
+import { homeFor } from '@/lib/routes';
 import { latestRun } from '@/lib/engine';
 import { nextAction, stageLabel } from '@/lib/stage';
 import type { Project } from '@/lib/types';
@@ -20,12 +22,18 @@ function tone(p: Project): 'neutral' | 'accent' | 'ok' | 'warn' | 'bad' {
 /** One project, one line: its name, where it is, and what happens next. */
 export function ProjectRow({ p }: { p: Project }) {
   const ws = useApp((s) => s.workspace);
+  const viewAs = useApp((s) => s.viewAs);
+  const router = useRouter();
+  const href = homeFor(viewAs, p);
   const now = Date.now();
   const next = nextAction(p, ws, now);
   const last = Math.max(p.createdAt, ...p.runs.map((r) => r.at), ...p.changes.map((c) => c.at), ...p.requests.map((r) => r.at));
   return (
     <Link
-      href={`/p/${p.id}`}
+      href={href}
+      // Start loading the moment you point at it, so the click opens it straight away.
+      onMouseEnter={() => router.prefetch(href)}
+      onFocus={() => router.prefetch(href)}
       className="press group flex items-center gap-4 rounded-xl border border-line bg-surface px-4 py-3.5 transition-colors hover:border-line2 hover:bg-surface2"
     >
       <div className="min-w-0 flex-1">

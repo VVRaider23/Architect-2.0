@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
 import { LogoMark } from '@/components/shell';

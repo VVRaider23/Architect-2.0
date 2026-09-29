@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { Suspense, useState } from 'react';
 import { ArrowRight, Send, X } from 'lucide-react';
 import { useApp } from '@/lib/store';

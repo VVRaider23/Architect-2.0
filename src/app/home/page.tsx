@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Bot, GitBranch, Lightbulb, Paperclip, X } from 'lucide-react';
 import { useApp } from '@/lib/store';
@@ -13,10 +13,11 @@ import { Button, Card, Chip, Segmented } from '@/components/ui';
 import { PromptBox } from '@/components/prompt-box';
 import { ProjectRow } from '@/components/project-row';
 import { ConsultantModal, PlusMenu, PromptLibraryModal, StudioAgentsModal } from '@/components/home-extras';
+import { ShellSkeleton } from '@/components/skeletons';
 
 export default function HomePage() {
   return (
-    <RequireAuth>
+    <RequireAuth fallback={<ShellSkeleton page="home" />}>
       <AppShell>
         <Home />
       </AppShell>

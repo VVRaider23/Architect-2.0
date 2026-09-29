@@ -9,12 +9,13 @@ import type { LaunchRules } from '@/lib/types';
 import { AppShell, RequireAuth, roleLabel } from '@/components/shell';
 import { Avatar, Button, Card, Chip, Segmented, Toggle } from '@/components/ui';
 import { cn, dateLabel, clock } from '@/lib/utils';
+import { ShellSkeleton } from '@/components/skeletons';
 
 type Section = 'rules' | 'members' | 'connections' | 'audit' | 'usage';
 
 export default function SettingsPage() {
   return (
-    <RequireAuth>
+    <RequireAuth fallback={<ShellSkeleton page="settings" />}>
       <Settings />
     </RequireAuth>
   );

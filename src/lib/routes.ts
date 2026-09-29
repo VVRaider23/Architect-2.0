@@ -9,7 +9,7 @@ export function homeFor(role: Role, p: Project | undefined): string {
     const r = pendingRequest(p) ?? [...p.requests].reverse()[0];
     return r ? `/p/${p.id}/requests/${r.id}` : `/p/${p.id}/requests`;
   }
-  return `/p/${p.id}`;
+  return screenFor(p, 'builder');
 }
 
 /** The screen that fits where the project is right now. */

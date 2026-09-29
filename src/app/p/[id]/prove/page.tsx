@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Flag, GitPullRequest, Play, UserPlus, Wrench } from 'lucide-react';
 import { useApp } from '@/lib/store';

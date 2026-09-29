@@ -6,6 +6,7 @@ import { Toaster } from '@/components/shell';
 import { SyncState } from '@/components/sync';
 import { TourCard } from '@/components/tour';
 import { CommandPalette } from '@/components/palette';
+import { NavProgress } from '@/components/nav-progress';
 
 export const metadata: Metadata = {
   title: 'Architect 2.0 · Build it. Prove it. Ship it.',
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="min-h-screen bg-bg font-sans text-ink antialiased">
+        <NavProgress />
         {children}
         <Toaster />
         <CommandPalette />

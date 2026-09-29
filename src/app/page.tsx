@@ -1,34 +1,46 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
+import { useRouter } from '@/lib/nav';
 import { Logo, TopBar } from '@/components/shell';
 import { Button } from '@/components/ui';
 import { PromptBox } from '@/components/prompt-box';
 
-/** Screen 1 · Welcome. One job: say what this is, and let you start by typing. */
+/**
+ * Screen 1 · Welcome. One job: say what this is, and let you start by typing.
+ * It always shows, even if you've been here before. If you're already signed in,
+ * the top right takes you back to your projects and typing an idea starts building it.
+ */
 export default function Welcome() {
   const ready = useHydrated();
   const signedIn = useApp((s) => s.signedIn);
   const ws = useApp((s) => s.workspace);
+  const createProject = useApp((s) => s.createProject);
+  const setViewAs = useApp((s) => s.setViewAs);
   const router = useRouter();
   const [idea, setIdea] = useState('');
-
-  useEffect(() => {
-    if (ready && signedIn) router.replace(ws ? '/home' : '/setup');
-  }, [ready, signedIn, ws, router]);
+  const [busy, setBusy] = useState(false);
+  const inside = ready && signedIn;
 
   const start = () => {
+    if (inside && ws) {
+      // Already set up: go straight to the three questions for this idea.
+      setBusy(true);
+      setViewAs('builder');
+      const id = createProject(idea.trim());
+      router.push(`/p/${id}/questions`);
+      return;
+    }
     try {
       localStorage.setItem('arch_idea', idea.trim());
     } catch {
       /* private window: the idea just won't carry over */
     }
-    router.push('/signin');
+    router.push(inside ? '/setup' : '/signin');
   };
 
   return (
@@ -37,9 +49,18 @@ export default function Welcome() {
         className="border-transparent bg-transparent backdrop-blur-0"
         left={<Logo href="/" />}
         right={
-          <Button variant="ghost" href="/signin">
-            Sign in
-          </Button>
+          !ready ? (
+            // Keeps the space while we check whether you're signed in, so nothing jumps.
+            <span aria-hidden className="block h-9 w-[92px]" />
+          ) : inside ? (
+            <Button variant="secondary" href="/home" iconRight={<ArrowRight className="h-4 w-4" />} className="animate-fade-in">
+              Your projects
+            </Button>
+          ) : (
+            <Button variant="ghost" href="/signin" className="animate-fade-in">
+              Sign in
+            </Button>
+          )
         }
       />
       <main className="flex flex-1 justify-center px-4 pb-20 pt-[13vh]">
@@ -53,8 +74,10 @@ export default function Welcome() {
               value={idea}
               onChange={setIdea}
               onSubmit={start}
+              busy={busy}
               autoFocus
               placeholder="For example: a claims assistant that flags risky claims for a person to check…"
+              hint={inside && ws ? 'Press Enter to plan it' : 'Press Enter to start'}
             />
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px]">

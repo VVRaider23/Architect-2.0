@@ -1,11 +1,12 @@
 'use client';
 
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { Suspense, useEffect } from 'react';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
 import { screenFor } from '@/lib/routes';
-import { Loading } from '@/components/shell';
+import { RouteSkeleton } from '@/components/skeletons';
 import { MissingProject } from '@/components/missing';
 
 /** Old links used ?tab=…; each tab now has its own screen. */
@@ -23,7 +24,7 @@ const LEGACY: Record<string, string> = {
 
 export default function ProjectIndex() {
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<RouteSkeleton />}>
       <Redirect />
     </Suspense>
   );
@@ -38,14 +39,16 @@ function Redirect() {
   const viewAs = useApp((s) => s.viewAs);
   const p = useApp((s) => s.projects.find((x) => x.id === id));
 
+  const tab = search.get('tab');
+  const target = ready && signedIn && p ? (tab && LEGACY[tab] && viewAs === 'builder' ? `/p/${p.id}/${LEGACY[tab]}` : screenFor(p, viewAs)) : null;
+
   useEffect(() => {
     if (!ready) return;
     if (!signedIn) return router.replace('/signin');
-    if (!p) return;
-    const tab = search.get('tab');
-    router.replace(tab && LEGACY[tab] && viewAs === 'builder' ? `/p/${p.id}/${LEGACY[tab]}` : screenFor(p, viewAs));
-  }, [ready, signedIn, p, viewAs, search, router]);
+    if (target) router.replace(target);
+  }, [ready, signedIn, target, router]);
 
   if (ready && signedIn && !p) return <MissingProject />;
-  return <Loading />;
+  // Show the shape of the screen we're about to open, so the move looks like one step.
+  return <RouteSkeleton path={target} />;
 }

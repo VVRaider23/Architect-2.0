@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useEffect, useRef } from 'react';
 import { ChevronDown, Hammer } from 'lucide-react';
 import { useApp } from '@/lib/store';

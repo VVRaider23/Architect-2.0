@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { navProgress, useRouter } from '@/lib/nav';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronDown, CloudCheck, CloudOff, Compass, FolderKanban, Gauge, Home, Keyboard, Loader2, LogOut, RotateCcw, Search, Settings, X } from 'lucide-react';
 import { useApp } from '@/lib/store';
@@ -411,19 +412,27 @@ function ToastItem({ t, onDone }: { t: ToastMsg; onDone: (id: string) => void })
   );
 }
 
-export function Loading() {
+/** The logo and a small sliding bar, for the moment the app first opens. Fades in after a beat, so a quick open shows nothing. */
+export function Loading({ label = 'Architect' }: { label?: string }) {
+  useEffect(() => navProgress.hold(), []);
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="flex items-center gap-3 text-[13.5px] text-ink3">
-        <LogoMark size={22} />
-        <span className="animate-pulse2">Loading…</span>
+    <div data-skeleton aria-busy="true" className="flex min-h-screen items-center justify-center">
+      <span role="status" className="sr-only">
+        Loading {label}
+      </span>
+      <div aria-hidden className="flex flex-col items-center gap-4 [animation:bone-in_300ms_var(--ease-out)_150ms_both]">
+        <LogoMark size={30} />
+        <span className="load-track" />
       </div>
     </div>
   );
 }
 
-/** Renders children only after the saved state loads, and sends signed-out visitors to sign in. */
-export function RequireAuth({ children, needWorkspace = true }: { children: ReactNode; needWorkspace?: boolean }) {
+/**
+ * Renders children only after the saved state loads, and sends signed-out visitors to sign in.
+ * `fallback` is what shows for that moment: ideally a placeholder shaped like the screen.
+ */
+export function RequireAuth({ children, needWorkspace = true, fallback }: { children: ReactNode; needWorkspace?: boolean; fallback?: ReactNode }) {
   const ready = useHydrated();
   const signedIn = useApp((s) => s.signedIn);
   const ws = useApp((s) => s.workspace);
@@ -433,6 +442,6 @@ export function RequireAuth({ children, needWorkspace = true }: { children: Reac
     if (!signedIn) router.replace('/signin');
     else if (needWorkspace && !ws) router.replace('/setup');
   }, [ready, signedIn, ws, needWorkspace, router]);
-  if (!ready || !signedIn || (needWorkspace && !ws)) return <Loading />;
+  if (!ready || !signedIn || (needWorkspace && !ws)) return <>{fallback ?? <Loading />}</>;
   return <>{children}</>;
 }

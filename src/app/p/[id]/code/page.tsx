@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, Download, ExternalLink, GitBranch, Terminal, Upload } from 'lucide-react';
 import { useApp } from '@/lib/store';

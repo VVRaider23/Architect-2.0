@@ -1,7 +1,8 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useApp } from '@/lib/store';
 import { useServer } from '@/lib/account';
 import { enterAccount } from '@/lib/enter';

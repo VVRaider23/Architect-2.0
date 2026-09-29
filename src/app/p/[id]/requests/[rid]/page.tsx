@@ -1,6 +1,7 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useEffect, useState } from 'react';
 import { ArrowRight, ChevronDown, Printer, X } from 'lucide-react';
 import { useApp } from '@/lib/store';

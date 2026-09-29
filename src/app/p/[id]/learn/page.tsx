@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/lib/nav';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Clock } from 'lucide-react';
 import { useApp } from '@/lib/store';
