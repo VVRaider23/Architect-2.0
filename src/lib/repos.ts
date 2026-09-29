@@ -54,7 +54,7 @@ export const DEMO_REPOS: { name: string; meta: string; analysis: RepoAnalysis }[
 ];
 
 /** A GitHub repo written as owner/name or as a github.com link. */
-export const REPO = /^(?:https?:\/\/github\.com\/)?([\w.-]+\/[\w.-]+?)(?:\.git)?\/?$/i;
+export const REPO = /^(?:(?:https?:\/\/)?(?:www\.)?github\.com\/)?([\w-]+\/[\w.-]+?)(?:\.git)?(?:[/?#].*)?$/i;
 
 /** The repo in a pasted owner/name or github.com link, or null. */
 export function repoFrom(text: string): string | null {
