@@ -172,12 +172,13 @@ export function launchPath(p: Project, ws: Workspace | null, now: number): PathS
     state: liveCurrent ? 'done' : testCurrent || signedOff ? 'current' : 'todo',
     sub: liveCurrent ? `Live · v${p.version}` : testCurrent ? `Test · v${p.version}` : signedOff ? 'ready to deploy' : undefined,
   });
-  const liveRunning = live.status === 'running';
+  // Learning starts as soon as anyone outside the builder uses the app: the Test pilot counts.
+  const inUse = live.status === 'running' || test.status === 'running';
   steps.push({
     key: 'learn',
     label: 'Learn',
-    state: liveRunning || flags ? 'current' : 'todo',
-    sub: flags ? `${flags} flag${flags > 1 ? 's' : ''}` : liveRunning ? 'watching' : undefined,
+    state: inUse || flags ? 'current' : 'todo',
+    sub: flags ? `${flags} flag${flags > 1 ? 's' : ''}` : inUse ? 'watching' : undefined,
   });
   return steps;
 }
