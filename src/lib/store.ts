@@ -141,8 +141,13 @@ export interface AppState {
   audit: AuditEvent[];
   toasts: ToastMsg[];
   inviteOpenFor: string | null;
+  /** Developer tools, chosen in Settings. null until someone chooses; then `devGuess` decides. */
+  devTools: boolean | null;
+  /** Our guess before anyone chooses: on after a GitHub sign-in or bringing code from GitHub. */
+  devGuess: boolean;
 
   signIn: (method: string, email?: string, mode?: 'demo' | 'account') => void;
+  setDevTools: (on: boolean) => void;
   signOut: () => void;
   setupWorkspace: (input: { name: string; domainJoin: boolean; runsOn: 'lyzr' | 'own'; github?: string }) => void;
   setViewAs: (role: Role) => void;
@@ -408,6 +413,8 @@ const initialState = () => ({
   audit: [] as AuditEvent[],
   toasts: [] as ToastMsg[],
   inviteOpenFor: null as string | null,
+  devTools: null as boolean | null,
+  devGuess: false,
 });
 
 export const useApp = create<AppState>()(
@@ -428,7 +435,13 @@ export const useApp = create<AppState>()(
             s.authMode = mode;
             s.userEmail = email || 'arjun@harborline.com';
             s.viewAs = 'builder';
+            if (/github/i.test(method)) s.devGuess = true;
             pushAudit(s, 'Arjun', 'signed in', 'Architect', `with ${method}${mode === 'demo' ? ' (demo)' : ''}`);
+          }),
+
+        setDevTools: (on) =>
+          set((s) => {
+            s.devTools = on;
           }),
 
         signOut: () =>
@@ -520,6 +533,7 @@ export const useApp = create<AppState>()(
           let id = '';
           set((s) => {
             if (!s.workspace) s.workspace = defaultWorkspace();
+            s.devGuess = true;
             const pid = uid('p');
             const repoName = info.repo.split('/')[1] ?? info.repo;
             const p = newProject(pid, `Import ${info.url}`, Date.now());
@@ -1256,9 +1270,17 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'architect2-demo-v1',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
+      // Version 2 added the Developer tools switch. Anyone who used Architect before it existed
+      // always saw the code, so they keep seeing it until they choose otherwise.
+      migrate: (saved, version) => {
+        const state = (saved ?? {}) as Partial<AppState>;
+        return (version < 2 ? { ...state, devTools: state.devTools ?? null, devGuess: true } : state) as AppState;
+      },
       partialize: (s) => ({
+        devTools: s.devTools,
+        devGuess: s.devGuess,
         signedIn: s.signedIn,
         authMode: s.authMode,
         userEmail: s.userEmail,

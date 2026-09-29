@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ArrowRight, ExternalLink, GitMerge, GitPullRequest } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { useDevTools } from '@/lib/hooks';
 import { languageOf } from '@/lib/codegen';
 import type { ChangeReceipt, Project } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ function sizeLine(ch: ChangeReceipt) {
 
 /** Screen 14 · Pull request. One job: is the change safe to merge? The checks answer it. */
 function PullRequest({ p, now }: { p: Project; now: number }) {
+  const dev = useDevTools();
   const { cid } = useParams<{ cid: string }>();
   const mergeChange = useApp((s) => s.mergeChange);
   const gh = useGitHub(p);
@@ -106,7 +108,7 @@ function PullRequest({ p, now }: { p: Project; now: number }) {
       </ul>
 
       {ch.diffFile && ch.beforeText !== undefined && (
-        <Disclosure label="See the change" className="mt-6">
+        <Disclosure label="See the change" className="mt-6" defaultOpen={dev}>
           <div className="overflow-hidden rounded-xl border border-code-line">
             <div className="border-b border-code-line bg-code px-4 py-2 font-mono text-[12px] text-code-dim">{ch.diffFile}</div>
             <DiffBlock before={ch.beforeText ?? ''} after={ch.afterText ?? ''} lang={languageOf(ch.diffFile)} className="max-h-[360px] py-2" />

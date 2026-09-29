@@ -3,21 +3,23 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Code2, Eye, MessageSquare, Terminal } from 'lucide-react';
 import { BUILD_STEPS, useApp } from '@/lib/store';
 import { arrivedFlags, buildStep, type StepKey } from '@/lib/stage';
 import { useRouter } from '@/lib/nav';
+import { useDevTools } from '@/lib/hooks';
 import type { Project } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Segmented } from './ui';
+import { Menu, Segmented } from './ui';
 import { LogoMark, PersonSwitch, RequireAuth, UserMenu } from './shell';
-import { ProjectTopBar } from './project-bar';
+import { ProjectTopBar, workTabs, type WorkTab } from './project-bar';
 import { RouteSkeleton } from './skeletons';
 import { MissingProject } from './missing';
 import { ChatPanel } from './project/chat-panel';
 import { InviteModal } from './project/invite';
 
-export { ProjectTopBar };
+export { ProjectTopBar, workTabs };
+export type { WorkTab };
 
 /** A clock that only ticks while something on screen is waiting for time to pass. */
 export function useTicker(active: boolean, ms = 1000) {
@@ -149,11 +151,56 @@ export function FocusScreen({
   );
 }
 
-export type WorkTab = 'app' | 'agents' | 'code';
 
 /** App, Agents and Code: the chat on the left, the thing you are looking at on the right. */
+/** With developer tools off, the code and the API are tucked in here: still one click away. */
+function TuckedAway({ p }: { p: Project }) {
+  const router = useRouter();
+  const setDevTools = useApp((s) => s.setDevTools);
+  const toast = useApp((s) => s.toast);
+  return (
+    <Menu
+      label="Developer tools"
+      width={280}
+      header={<div className="px-2.5 pb-1 pt-1.5 text-[12px] font-medium text-ink3">Developer tools</div>}
+      items={[
+        { id: 'code', label: 'See the code', sub: 'Every file, ready to download or save to GitHub', icon: <Code2 className="h-4 w-4" />, onSelect: () => router.push(`/p/${p.id}/code`) },
+        { id: 'api', label: 'Use it from your code', sub: 'API keys and examples', icon: <Terminal className="h-4 w-4" />, onSelect: () => router.push(`/p/${p.id}/api`) },
+        {
+          id: 'on',
+          label: 'Always show them',
+          sub: 'Adds a Code tab here. Change it any time in Settings.',
+          icon: <Eye className="h-4 w-4" />,
+          onSelect: () => {
+            setDevTools(true);
+            toast('Developer tools are on: the Code tab, the build log and API keys.', 'ok');
+          },
+        },
+      ]}
+      trigger={({ open, toggle }) => (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-label="Developer tools"
+          title="Developer tools"
+          data-tour="dev-tools"
+          className={cn(
+            'press grid h-8 w-8 place-items-center rounded-lg border text-ink2 transition-colors hover:text-ink',
+            open ? 'border-line2 bg-surface2 text-ink' : 'border-line',
+          )}
+        >
+          <Code2 className="h-4 w-4" />
+        </button>
+      )}
+    />
+  );
+}
+
 export function Workspace({ p, now, tab, right, children }: { p: Project; now: number; tab: WorkTab; right?: ReactNode; children: ReactNode }) {
   const router = useRouter();
+  const dev = useDevTools();
   const [chatOpen, setChatOpen] = useState(false);
   // The tab moves the moment it's clicked, even if the next screen takes a moment to load.
   const [shown, setShown] = useState(tab);
@@ -177,16 +224,13 @@ export function Workspace({ p, now, tab, right, children }: { p: Project; now: n
               value={shown}
               label="What to look at"
               tour="work-tabs"
-              options={[
-                { id: 'app', label: 'App' },
-                { id: 'agents', label: 'Agents', tour: 'tab-agents' },
-                { id: 'code', label: 'Code', tour: 'tab-code' },
-              ]}
+              options={workTabs(dev, tab)}
               onChange={(t) => {
                 setShown(t);
                 router.push(`/p/${p.id}/${t}`);
               }}
             />
+            {!dev && <TuckedAway p={p} />}
             <div className="flex flex-1 items-center justify-end gap-2">{right}</div>
           </div>
           <div className="relative min-h-0 flex-1 animate-fade-in">{children}</div>

@@ -1,6 +1,6 @@
 # Architect 2.0 · Build AI agent apps your experts trust
 
-A working prototype of the next version of [architect.new](https://architect.new): build an AI agent app from a sentence or from your own repo, **prove** it with your expert's examples, and **ship** it with IT's sign-off.
+A working prototype of the next version of [architect.new](https://architect.new): build an AI agent app from a sentence or from your own repo (two ways in, one app), **prove** it with your expert's examples, and **ship** it with IT's sign-off.
 
 **Live:** [architect-2-0-alpha.vercel.app](https://architect-2-0-alpha.vercel.app) · **New here?** Press **Take the 3-minute tour** on the front page. No sign-in needed; a narrator builds a real app with you and can do each step for you.
 
@@ -27,7 +27,7 @@ A developer can build an agent app in days. What stops it going live is **trust*
 
 | Step | Who | What happens |
 |---|---|---|
-| **Build** | Arjun, the builder | Describe the app, answer 3 quick questions, approve a 4-line plan (the cost is shown first), watch it build. Or import a GitHub repo. Agents in LangGraph, CrewAI, OpenAI Agents SDK, Google ADK or Lyzr. |
+| **Build** | Arjun, the builder | Two ways in: **Describe it** (answer 3 quick questions, approve a 4-line plan with the cost shown first, watch it build) or **Bring your code** from GitHub. Agents in LangGraph, CrewAI, OpenAI Agents SDK, Google ADK or Lyzr. |
 | **Prove** | Meera, the expert | Every change reruns the **Answer Key**, her own examples. She marks answers right or wrong without ever seeing code, and each correction becomes a new test. |
 | **Sign off** | Farah, from IT | She approves from a one-page **Launch Pack** built from the evidence, checked against **launch rules** she sets once. Small, safe updates take a **fast lane**. |
 | **Ship** | Arjun | Preview → Test (a pilot group) → Live (everyone, press and hold), with rollback. Every deployed version is also an API. |
@@ -39,7 +39,7 @@ The **View as** switch (top right) shows the same project as each person, so one
 
 | Person | Role | Sees |
 |---|---|---|
-| **Arjun Mehta** | Builder, senior AI engineer | Everything, including the code |
+| **Arjun Mehta** | Builder, senior AI engineer | Everything. The code, the build log and API keys sit up front while **Developer tools** are on |
 | **Meera Krishnan** | Expert, claims operations lead | Answers to check, on a light, quiet screen. No code. |
 | **Farah Siddiqui** | IT and security lead | One-page decisions and her launch rules. No code. |
 
@@ -49,10 +49,10 @@ The demo company, **Harborline Insurance**, is made up.
 
 **Fastest:** on the front page, press **Take the 3-minute tour**. Or by hand:
 
-1. Type an idea on the front page and press **Enter**. **Continue with GitHub** (or email). Answer the one GitHub question.
+1. Type an idea on the front page and press **Enter** (or pick **Bring your code** and paste a repo). Sign in: with email you go straight to Home; with **Continue with GitHub** you answer one question about saving code first.
 2. On Home, press **Enter**. Answer the **3 questions** with the keys 1, 2, 3. Read the plan, press **Build it**.
 3. Watch the drawing fill in (or **Skip the wait**). **See the results**: *12 of 15 answers match. The 3 that miss are all theft claims.*
-4. **Open the app.** Press **Select**, click a risk badge, and ask for a change. Look at **Agents** (hover one) and **Code**.
+4. **Open the app.** Press **Select**, click a risk badge, and ask for a change. Look at **Agents** (hover one) and **Code** (with developer tools off, it's in the **</>** menu; turn them on in Settings, the account menu or ⌘K).
 5. **See the 3 misses** → **Ask Meera to check them** → type "me", **Enter**, **Send invite**.
 6. **See it as Meera.** Press **R** for right, or **W** for wrong and then pick what it should have said (keys 1-4). The three theft answers are the wrong ones.
 7. Back as Arjun, **Fix all 6**. Watch the rows turn right, see *Nothing else broke*, then **View pull request** → checks tick → **Merge**.
@@ -66,8 +66,9 @@ Anywhere: press **⌘K** (or **Ctrl K**) to jump to any screen or run any action
 
 | The brief asks for | Where | What works |
 |---|---|---|
-| Sign-in | `/signin`, `/setup` | **Real accounts** (email and password) and **Sign in with GitHub**, with secure sessions. Demo sign-in when no database is set. |
-| Homepage | `/home` | Changes with the person. **Arjun:** the prompt box with the **+ menu** (attach files, Lyzr Studio agents, prompt library), **Guided / One Shot**, starters, **Not sure what to build?** (AI Consultant), recent projects. **Meera** and **Farah** see only what's waiting for them. |
+| Sign-in | `/signin`, `/setup` | **Real accounts** (email and password) and **Sign in with GitHub**, with secure sessions. The first option follows the way in: email for **Describe it**, GitHub for **Bring your code**. Email sign-ins skip the GitHub question. Demo sign-in when no database is set. |
+| Homepage | `/`, `/home` | Two ways in: **Describe it** or **Bring your code**. Home changes with the person. **Arjun:** the prompt box with the **+ menu** (attach files, Lyzr Studio agents, prompt library), **Guided / One Shot**, starters, **Not sure what to build?** (AI Consultant), or a repo box with three of his repos, then recent projects. **Meera** and **Farah** see only what's waiting for them. |
+| Technical and non-technical builders | **Developer tools** (Settings, account menu, ⌘K) | One app for both. On: a Code tab, the raw build log beside the drawing, API keys on Ship. Off: all of it tucked in a **</>** menu. On by default after a GitHub sign-in or bringing code, off after describing an app with email. |
 | Chat window | Left side of **App · Agents · Code** | Ask for changes; open questions get answers from a **real AI model** when a key is set. Each change comes back with **Undo** and a pull request. |
 | Live preview | **App** | The generated app on desktop or phone, **point-and-ask** (Select, click, describe), and a console with every mismatch. |
 | Agents | **Agents** | The agent map: hover to see who talks to whom, click to open instructions, model and safety rules. |
@@ -142,6 +143,8 @@ The full technical design, including the one structural decision and the build p
 ## Design principles
 
 - **One screen, one job.** Every screen answers one question and has one main button.
+- **Two ways in, one app.** Describe it, or bring your code. Nobody is asked whether they're technical; developer tools follow the way you came in, and one switch changes them.
+- **Never a frozen click.** Placeholders shaped like the next screen, a thin line when a move takes a moment, and every project screen loaded in the background.
 - **The loop is the map.** A project's only menu is Build · Prove · Sign off · Ship · Learn, showing what's done, what's happening and what's locked.
 - **Each person sees only their job.** Meera sees answers, never code. Farah sees evidence, never code.
 - **Show what happened.** Buttons show busy and done; fixes show exactly what changed, with Undo.

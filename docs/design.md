@@ -25,11 +25,13 @@ There are four kinds of screen. Every screen in the app is one of them.
 | Layout | Used for | What it is |
 |---|---|---|
 | **Focus** | Questions, plan, ready, what's wrong, pull request, sign-off, ship, go live, API, flags | The project top bar, then one column in the middle (560 px, or 720 px for lists), starting 8% down the screen. Nothing on the sides. |
-| **Workspace** | App, Agents, Code | The project top bar, the chat on the left (340–360 px), and a sub-bar with **App · Agents · Code** tabs over the main area. |
+| **Workspace** | App, Agents, Code | The project top bar, the chat on the left (340–360 px), and a sub-bar with **App · Agents · Code** tabs over the main area. With developer tools off, the tabs are **App · Agents** and a small **</>** button holds the code and the API. |
 | **Paper** | Meera's review, Farah's decision | A light theme, a plain top bar (logo, project, what this is, person), one 600 px column. It should feel like reading, not building. |
 | **App shell** | Home, Projects, Usage, Settings, Import | A top bar plus a short side menu (Home, Projects, Usage, Settings) and the credits meter. On phones the menu becomes a row of tabs. |
 
 Get-in screens (Welcome, Sign in, Setup) are Focus screens with only the logo in the top bar.
+
+**Between screens,** each layout has a placeholder of the same shape: the same top bar (the real one when we can draw it) and grey shapes where the content will go, fading in after a beat so a fast load shows nothing. A thin iris line runs along the top of the window while a move takes longer than 90 ms. Every screen of a project loads in the background when you open it, so most moves show neither.
 
 ### The project top bar
 
@@ -66,6 +68,9 @@ All in `src/components/ui.tsx`. Each one has its small interaction built in, so 
 | Where | What happens | Timing | Why |
 |---|---|---|---|
 | Every button | Sinks while pressed | 110 ms | Confirms the click before anything else happens |
+| Every move to another screen | A thin line creeps along the top if it takes more than 90 ms, then fills and fades; the next screen's placeholder appears at once | 90 ms delay, 240 ms, fades in 260 ms | The click visibly worked, even on a slow connection, and nothing flashes when it's fast |
+| Two ways in (S1, S4) | One underline slides to **Describe it** or **Bring your code**; the box below swaps without the page jumping | 300 ms | Two ways to start read as one choice, not as another setting |
+| Bring your code (S1, S4) | A repo that isn't owner/name or a github.com link: red border, a shake and the fix in one line | 320 ms | Catches the mistake before sign-in, in plain words |
 | Prompt boxes (S1, S4, chat) | Send button wakes up (grey → iris with glow) when there's text; the hint "Press Enter to start" fades in | 200 ms | Shows it's ready, without a disabled-button puzzle |
 | Sign in (S2) | A bad email shakes the form and says exactly what's missing | 320 ms | Errors feel physical and specific, not like a scolding |
 | Questions (S6) | The chosen answer gets a drawn tick, then the next question slides in from the right; progress bars fill | 320 ms, 260 ms | You feel the progress; keys 1-3 make it fast |
@@ -74,6 +79,8 @@ All in `src/components/ui.tsx`. Each one has its small interaction built in, so 
 | Ready (S9) | The ring fills while the number counts up | 1 s | The score lands with weight |
 | App (S10) | Select: hovering outlines a part and names it; clicking puts it in the chat | 100 ms | "Point at it and say what to change" needs no explanation |
 | App (S10) | The console slides up from the bottom | 300 ms, drawer curve | Details on demand, out of the way otherwise |
+| App, Agents, Code | The tab highlight glides the moment it's clicked, before the next screen has loaded | 300 ms | The click is answered at once |
+| </> menu (developer tools off) | See the code, Use it from your code, Always show them | 150 ms | Tucked away is never gone |
 | Agents (S11) | Hover an agent: everything else fades, its connections light up | 200 ms | Shows who talks to whom without a legend |
 | What's wrong (S13) | Fix all: each row turns from Wrong to Right, crossing out the old answer | 140 ms stagger | You see exactly what changed, one by one |
 | Toast | "Fixed 6 answers. Nothing else broke." with Undo and a countdown line | 7–8 s, pauses on hover | Moving fast is safe when there's a way back |
@@ -92,11 +99,11 @@ All in `src/components/ui.tsx`. Each one has its small interaction built in, so 
 
 | # | Screen | The job | Main button | The one interaction |
 |---|---|---|---|---|
-| S1 | Welcome | What is this, where do I start? | (Enter) | Send button wakes up |
-| S2 | Sign in | Get in | Continue with GitHub | Email form shakes on a bad address |
-| S3 | GitHub access | Where should the code live? | Allow code pushes | Button morphs to "Allowed" |
-| S4 | Home | What should we build? | (Enter) | Starters fill the box |
-| S5 | Import | Which repo? | Import claims-bot | "Found 3 agents written in CrewAI" appears |
+| S1 | Welcome | What is this, where do I start? | (Enter) | Two ways in; send button wakes up |
+| S2 | Sign in | Get in | Continue (email) or Continue with GitHub, whichever fits the way in | Email form shakes on a bad address |
+| S3 | GitHub access | Where should the code live? (GitHub sign-ins only) | Allow code pushes | Button morphs to "Allowed" |
+| S4 | Home | What should we build? | (Enter) | Starters fill the box; three repos to pick from |
+| S5 | Bring your code | Which repo? | Import claims-bot | "Found 3 agents written in CrewAI" appears |
 | S6 | Three questions | Answer three quick questions | (keys 1-3) | Tick, then slide to the next |
 | S7 | The plan | Is this the right plan? | Build it | Framework menu; details on demand |
 | S8 | Building | What's happening, how long is left? | See the results | The drawing draws itself |
@@ -153,3 +160,6 @@ All in `src/components/ui.tsx`. Each one has its small interaction built in, so 
 | 7 | Undo in the toast, not a confirm dialog | Fast when right, safe when wrong | "Are you sure?" before every fix | |
 | 8 | Point-and-ask in the app preview | Changing a UI by describing where is hard; pointing is easy | Only a free-text chat | |
 | 9 | Keys in code read from the environment | A key pasted into code leaks | Printing the real key in snippets | |
+| 10 | One app with two ways in, and a Developer tools switch | Serves non-technical builders and developers without asking anyone what they are; the way in is the signal | A second, "classic" copy of today's Architect next to 2.0 | Current Architect users can't find what they know |
+| 11 | Tuck developer tools away, never remove them | Non-developers get a calmer screen; the code is still one click away (</> menu, ⌘K) | Hiding the Code screen from people who didn't connect GitHub | Developers say they can't find the code |
+| 12 | Placeholders shaped like the next screen, plus a thin line | The layout doesn't jump when content arrives, and a slow move still answers the click | A spinner or "Loading…" in the middle of an empty page | |

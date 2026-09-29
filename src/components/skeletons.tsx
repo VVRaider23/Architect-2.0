@@ -4,13 +4,12 @@ import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useApp } from '@/lib/store';
-import { useHydrated } from '@/lib/hooks';
+import { useDevTools, useHydrated } from '@/lib/hooks';
 import { navProgress, useRouter } from '@/lib/nav';
 import type { StepKey } from '@/lib/stage';
 import { cn } from '@/lib/utils';
-import type { WorkTab } from './frame';
 import { AppShell, Logo, LogoMark, PersonSwitch, TopBar, UserMenu } from './shell';
-import { ProjectTopBar } from './project-bar';
+import { ProjectTopBar, workTabs, type WorkTab } from './project-bar';
 import { Segmented } from './ui';
 
 /*
@@ -142,6 +141,8 @@ const TAB_LABEL: Record<WorkTab, string> = { app: 'the app', agents: 'the agents
 export function WorkspaceSkeleton({ tab }: { tab: WorkTab }) {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
+  const ready = useHydrated();
+  const dev = useDevTools();
   return (
     <Busy label={TAB_LABEL[tab]} className="flex h-screen flex-col overflow-hidden">
       <ProjectBar section="build" />
@@ -167,11 +168,7 @@ export function WorkspaceSkeleton({ tab }: { tab: WorkTab }) {
             <Segmented
               value={tab}
               label="What to look at"
-              options={[
-                { id: 'app', label: 'App' },
-                { id: 'agents', label: 'Agents' },
-                { id: 'code', label: 'Code' },
-              ]}
+              options={workTabs(ready && dev, tab)}
               onChange={(t) => router.push(`/p/${id}/${t}`)}
             />
             <div className="flex flex-1 items-center justify-end gap-2">

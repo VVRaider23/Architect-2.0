@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from '@/lib/nav';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Bot, GitBranch, Lightbulb, Paperclip, X } from 'lucide-react';
+import { ArrowRight, Bot, Lightbulb, Paperclip, X } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useServer } from '@/lib/account';
 import { openTasks, pendingRequest } from '@/lib/stage';
@@ -14,6 +14,9 @@ import { PromptBox } from '@/components/prompt-box';
 import { ProjectRow } from '@/components/project-row';
 import { ConsultantModal, PlusMenu, PromptLibraryModal, StudioAgentsModal } from '@/components/home-extras';
 import { ShellSkeleton } from '@/components/skeletons';
+import { RepoBox, WayTabs } from '@/components/start';
+import { preferredWay, preferWay, type Way } from '@/lib/start';
+import { useRepoChoices } from '@/lib/repos';
 
 export default function HomePage() {
   return (
@@ -58,6 +61,25 @@ function BuilderHome() {
   const [modal, setModal] = useState<null | 'studio' | 'library' | 'consultant'>(null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // The two ways in. Someone arriving with an idea sees "Describe it"; otherwise the way they used last.
+  const [way, setWay] = useState<Way>(() => {
+    try {
+      if (localStorage.getItem('arch_idea')) return 'describe';
+    } catch {
+      /* ignore */
+    }
+    return preferredWay();
+  });
+  const [repo, setRepo] = useState('');
+  const repos = useRepoChoices();
+  const chooseWay = (w: Way) => {
+    setWay(w);
+    preferWay(w);
+  };
+  const openRepo = (name: string) => {
+    setBusy(true);
+    router.push(name ? `/import?repo=${encodeURIComponent(name)}` : '/import');
+  };
 
   useEffect(() => {
     try {
@@ -82,90 +104,105 @@ function BuilderHome() {
     <div className="mx-auto w-full max-w-[680px] px-4 pb-24 pt-[9vh] sm:px-6">
       <div className="animate-screen-in">
         <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.02em] sm:text-[34px]">What should we build, {firstName(email, accountName)}?</h1>
-        <div className="mt-6" data-tour="home-prompt">
-          <PromptBox
-            value={prompt}
-            onChange={setPrompt}
-            onSubmit={start}
-            busy={busy}
-            rows={3}
-            autoFocus
-            placeholder="Describe the app in a sentence or two…"
-            hint={mode === 'oneshot' ? 'Press Enter to build it' : 'Press Enter to plan it'}
-            left={
-              <>
-                <PlusMenu onAttach={() => fileRef.current?.click()} onStudio={() => setModal('studio')} onLibrary={() => setModal('library')} />
-                <Segmented
-                  size="sm"
-                  label="How to start"
-                  value={mode}
-                  onChange={setMode}
-                  options={[
-                    { id: 'guided', label: 'Guided' },
-                    { id: 'oneshot', label: 'One Shot' },
-                  ]}
-                />
-              </>
-            }
-          />
-          <input
-            ref={fileRef}
-            type="file"
-            multiple
-            hidden
-            onChange={(e) => {
-              const names = Array.from(e.target.files ?? []).map((f) => f.name);
-              setFiles((f) => Array.from(new Set([...f, ...names])));
-              e.target.value = '';
-            }}
-          />
-        </div>
+        <WayTabs way={way} onChange={chooseWay} className="mt-6" />
+        {way === 'code' ? (
+          <div className="mt-3 animate-fade-in" data-tour="home-repo">
+            <RepoBox
+              value={repo}
+              onChange={setRepo}
+              onSubmit={openRepo}
+              busy={busy}
+              autoFocus
+              hint="Architect reads it, finds the agents and adds tests. Nothing changes in your repo until you accept a pull request."
+              picks={repos.slice(0, 3)}
+              onPick={openRepo}
+            />
+          </div>
+        ) : (
+          <>
+          <div className="mt-3" data-tour="home-prompt">
+            <PromptBox
+              value={prompt}
+              onChange={setPrompt}
+              onSubmit={start}
+              busy={busy}
+              rows={3}
+              autoFocus
+              placeholder="Describe the app in a sentence or two…"
+              hint={mode === 'oneshot' ? 'Press Enter to build it' : 'Press Enter to plan it'}
+              left={
+                <>
+                  <PlusMenu onAttach={() => fileRef.current?.click()} onStudio={() => setModal('studio')} onLibrary={() => setModal('library')} />
+                  <Segmented
+                    size="sm"
+                    label="How to start"
+                    value={mode}
+                    onChange={setMode}
+                    options={[
+                      { id: 'guided', label: 'Guided' },
+                      { id: 'oneshot', label: 'One Shot' },
+                    ]}
+                  />
+                </>
+              }
+            />
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              hidden
+              onChange={(e) => {
+                const names = Array.from(e.target.files ?? []).map((f) => f.name);
+                setFiles((f) => Array.from(new Set([...f, ...names])));
+                e.target.value = '';
+              }}
+            />
+          </div>
 
-        {(files.length > 0 || studio.length > 0) && (
-          <div className="mt-3 flex flex-wrap gap-1.5 animate-slide-up">
-            {files.map((f) => (
-              <Chip key={f} tone="outline" icon={<Paperclip className="h-3 w-3" />}>
-                {f}
-                <button type="button" aria-label={`Remove ${f}`} className="press ml-0.5 text-ink3 hover:text-ink" onClick={() => setFiles((x) => x.filter((y) => y !== f))}>
-                  <X className="h-3 w-3" />
-                </button>
-              </Chip>
-            ))}
-            {studio.map((a) => (
-              <Chip key={a.id} tone="accent" icon={<Bot className="h-3 w-3" />}>
-                {a.name}
-              </Chip>
+          {(files.length > 0 || studio.length > 0) && (
+            <div className="mt-3 flex flex-wrap gap-1.5 animate-slide-up">
+              {files.map((f) => (
+                <Chip key={f} tone="outline" icon={<Paperclip className="h-3 w-3" />}>
+                  {f}
+                  <button type="button" aria-label={`Remove ${f}`} className="press ml-0.5 text-ink3 hover:text-ink" onClick={() => setFiles((x) => x.filter((y) => y !== f))}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </Chip>
+              ))}
+              {studio.map((a) => (
+                <Chip key={a.id} tone="accent" icon={<Bot className="h-3 w-3" />}>
+                  {a.name}
+                </Chip>
+              ))}
+            </div>
+          )}
+
+          <p className="mt-3 text-[13px] text-ink3">
+            {mode === 'guided' ? 'Guided: three quick questions and a one-page plan before anything is built.' : 'One Shot: Architect picks sensible answers and builds straight away.'}
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-[14px] text-ink3">Or start from</span>
+            {STARTERS.map((s) => (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => setPrompt(s.idea)}
+                aria-pressed={prompt === s.idea}
+                className="press h-8 rounded-full border border-line2 px-3 text-[13.5px] text-ink2 transition-colors hover:border-ink3/60 hover:text-ink aria-pressed:border-accent-line aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
+              >
+                {s.label}
+              </button>
             ))}
           </div>
-        )}
 
-        <p className="mt-3 text-[13px] text-ink3">
-          {mode === 'guided' ? 'Guided: three quick questions and a one-page plan before anything is built.' : 'One Shot: Architect picks sensible answers and builds straight away.'}
-        </p>
-
-        <div className="mt-6 flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-[14px] text-ink3">Or start from</span>
-          {STARTERS.map((s) => (
-            <button
-              key={s.label}
-              type="button"
-              onClick={() => setPrompt(s.idea)}
-              aria-pressed={prompt === s.idea}
-              className="press h-8 rounded-full border border-line2 px-3 text-[13.5px] text-ink2 transition-colors hover:border-ink3/60 hover:text-ink aria-pressed:border-accent-line aria-pressed:bg-accent-soft aria-pressed:text-accent-ink"
-            >
-              {s.label}
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[14px]">
+            <button type="button" onClick={() => setModal('consultant')} className="press inline-flex items-center gap-1.5 text-ink2 hover:text-ink">
+              <Lightbulb className="h-4 w-4" /> Not sure what to build?
             </button>
-          ))}
-        </div>
-
-        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-[14px]">
-          <Link href="/import" className="press group inline-flex items-center gap-1.5 text-ink2 hover:text-ink" data-tour="home-import">
-            <GitBranch className="h-4 w-4" /> Import from GitHub instead
-          </Link>
-          <button type="button" onClick={() => setModal('consultant')} className="press inline-flex items-center gap-1.5 text-ink2 hover:text-ink">
-            <Lightbulb className="h-4 w-4" /> Not sure what to build?
-          </button>
-        </div>
+          </div>
+          </>
+        )}
       </div>
 
       {projects.length > 0 && (

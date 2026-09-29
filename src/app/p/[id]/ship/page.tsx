@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ArrowRight, ExternalLink, Lock, Rocket, Terminal } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { useDevTools } from '@/lib/hooks';
 import { approvedFor, pendingRequest } from '@/lib/stage';
 import type { Env, Project } from '@/lib/types';
 import { cn, timeAgo } from '@/lib/utils';
@@ -22,6 +23,7 @@ const forWhom = (a?: string) => {
 
 /** Screen 18 · Deploy. One job: who can use it right now? The dot shows where this version is. */
 function Ship({ p, now }: { p: Project; now: number }) {
+  const dev = useDevTools();
   const deploy = useApp((s) => s.deploy);
   const rollback = useApp((s) => s.rollback);
   const { test, live } = p.deployments;
@@ -125,9 +127,11 @@ function Ship({ p, now }: { p: Project; now: number }) {
             <Button variant="primary" size="xl" href={`/apps/${p.id}?env=live`} target="_blank" icon={<ExternalLink className="h-4 w-4" />}>
               Open the live app
             </Button>
-            <Button size="xl" href={`/p/${p.id}/api`} icon={<Terminal className="h-4 w-4" />}>
-              Use it from your code
-            </Button>
+            {dev && (
+              <Button size="xl" href={`/p/${p.id}/api`} icon={<Terminal className="h-4 w-4" />}>
+                Use it from your code
+              </Button>
+            )}
           </>
         ) : testOn ? (
           pending ? (
@@ -142,6 +146,11 @@ function Ship({ p, now }: { p: Project; now: number }) {
               <Button size="xl" href={`/apps/${p.id}?env=test`} target="_blank" icon={<ExternalLink className="h-4 w-4" />}>
                 Open the Test app
               </Button>
+              {dev && (
+                <Button size="xl" variant="ghost" href={`/p/${p.id}/api`} icon={<Terminal className="h-4 w-4" />}>
+                  Use it from your code
+                </Button>
+              )}
             </>
           )
         ) : (

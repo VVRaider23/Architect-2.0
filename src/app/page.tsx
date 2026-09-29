@@ -6,9 +6,11 @@ import { ArrowRight } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { useHydrated } from '@/lib/hooks';
 import { useRouter } from '@/lib/nav';
+import { saveStart, type Way } from '@/lib/start';
 import { Logo, TopBar } from '@/components/shell';
 import { Button } from '@/components/ui';
 import { PromptBox } from '@/components/prompt-box';
+import { RepoBox, WayTabs } from '@/components/start';
 
 /**
  * Screen 1 · Welcome. One job: say what this is, and let you start by typing.
@@ -22,10 +24,13 @@ export default function Welcome() {
   const createProject = useApp((s) => s.createProject);
   const setViewAs = useApp((s) => s.setViewAs);
   const router = useRouter();
+  const [way, setWay] = useState<Way>('describe');
   const [idea, setIdea] = useState('');
+  const [repo, setRepo] = useState('');
   const [busy, setBusy] = useState(false);
   const inside = ready && signedIn;
 
+  // Way 1 · Describe it.
   const start = () => {
     if (inside && ws) {
       // Already set up: go straight to the three questions for this idea.
@@ -35,11 +40,19 @@ export default function Welcome() {
       router.push(`/p/${id}/questions`);
       return;
     }
-    try {
-      localStorage.setItem('arch_idea', idea.trim());
-    } catch {
-      /* private window: the idea just won't carry over */
+    saveStart('describe', idea);
+    router.push(inside ? '/setup' : '/signin');
+  };
+
+  // Way 2 · Bring your code.
+  const startCode = (name: string) => {
+    if (inside && ws) {
+      setBusy(true);
+      setViewAs('builder');
+      router.push(name ? `/import?repo=${encodeURIComponent(name)}` : '/import');
+      return;
     }
+    saveStart('code', name);
     router.push(inside ? '/setup' : '/signin');
   };
 
@@ -67,18 +80,36 @@ export default function Welcome() {
         <div className="w-full max-w-[640px] animate-screen-in text-center">
           <h1 className="text-balance text-[40px] font-semibold leading-[1.04] tracking-[-0.035em] sm:text-[54px]">Build AI agent apps your experts trust</h1>
           <p className="mx-auto mt-5 max-w-[500px] text-pretty text-[17px] leading-relaxed text-ink2">
-            Describe the app. Architect builds it, checks it with your experts, and ships it.
+            Describe the app, or bring your code. Architect builds it, checks it with your experts, and ships it.
           </p>
-          <div className="mt-9" data-tour="welcome-prompt">
-            <PromptBox
-              value={idea}
-              onChange={setIdea}
-              onSubmit={start}
-              busy={busy}
-              autoFocus
-              placeholder="For example: a claims assistant that flags risky claims for a person to check…"
-              hint={inside && ws ? 'Press Enter to plan it' : 'Press Enter to start'}
-            />
+          <div className="mt-9 flex justify-center">
+            <WayTabs way={way} onChange={setWay} />
+          </div>
+          <div className="mt-3" data-tour="welcome-prompt">
+            {way === 'describe' ? (
+              <PromptBox
+                value={idea}
+                onChange={setIdea}
+                onSubmit={start}
+                busy={busy}
+                autoFocus
+                placeholder="For example: a claims assistant that flags risky claims for a person to check…"
+                hint={inside && ws ? 'Press Enter to plan it' : 'Press Enter to start'}
+              />
+            ) : (
+              <RepoBox
+                value={repo}
+                onChange={setRepo}
+                onSubmit={startCode}
+                busy={busy}
+                autoFocus
+                hint={
+                  inside
+                    ? 'Architect reads it, finds the agents and adds tests. Nothing changes in your repo until you accept a pull request.'
+                    : 'Next you’ll sign in with GitHub, so Architect can read your code. Nothing changes in your repo until you accept a pull request.'
+                }
+              />
+            )}
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[14px]">
             <Link href="/tour" className="press group inline-flex items-center gap-1.5 text-ink2 hover:text-ink">

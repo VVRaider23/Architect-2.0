@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useRouter } from '@/lib/nav';
+import { useDevTools } from '@/lib/hooks';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { create } from 'zustand';
 import {
@@ -68,6 +69,7 @@ export function CommandPalette() {
   const router = useRouter();
   const signedIn = useApp((s) => s.signedIn);
   const viewAs = useApp((s) => s.viewAs);
+  const dev = useDevTools();
   const pid = pathname.match(/^\/p\/([^/]+)/)?.[1];
   const p = useApp((s) => s.projects.find((x) => x.id === (pid ?? s.projects[0]?.id)));
   const [q, setQ] = useState('');
@@ -185,15 +187,28 @@ export function CommandPalette() {
         { id: 'g-learn', group: 'Go to', label: 'Flags from real use', icon: <Flag className={ic} />, words: 'learn feedback', run: go(`/p/${p.id}/learn`) },
         { id: 'g-api', group: 'Go to', label: 'Use it from your code', icon: <Terminal className={ic} />, words: 'api key curl', run: go(`/p/${p.id}/api`) },
       );
-      for (const f of ['agent.yaml', 'claims_agents/risk_rules.py', 'claims_agents/api.py', 'tests/answer_key.json'])
-        list.push({ id: `f-${f}`, group: 'Files', label: f, icon: <FileCode2 className={ic} />, mono: true, run: go(`/p/${p.id}/code?file=${encodeURIComponent(f)}`) });
+      if (dev)
+        for (const f of ['agent.yaml', 'claims_agents/risk_rules.py', 'claims_agents/api.py', 'tests/answer_key.json'])
+          list.push({ id: `f-${f}`, group: 'Files', label: f, icon: <FileCode2 className={ic} />, mono: true, run: go(`/p/${p.id}/code?file=${encodeURIComponent(f)}`) });
     }
+    if (viewAs === 'builder')
+      list.push({
+        id: 'devtools',
+        group: 'Actions',
+        label: dev ? 'Tuck away developer tools' : 'Show developer tools',
+        icon: <Code2 className={ic} />,
+        words: 'developer mode code api keys log technical simple',
+        run: () => {
+          st().setDevTools(!dev);
+          st().toast(dev ? 'Developer tools are tucked away. The code is still in ⌘K.' : 'Developer tools are on: the Code tab, the build log and API keys.', 'ok');
+        },
+      });
     if (p && viewAs === 'reviewer') list.push({ id: 'review', group: 'Actions', label: 'Check answers', icon: <ShieldCheck className={ic} />, run: go(`/p/${p.id}/review`) });
     if (p && viewAs === 'approver') list.push({ id: 'decide', group: 'Actions', label: 'Decide on the launch request', icon: <ShieldCheck className={ic} />, run: go(homeFor('approver', p)) });
     if (viewAs === 'builder')
       list.push(
         { id: 'new', group: 'Actions', label: 'Start a new app', icon: <Plus className={ic} />, words: 'build create project prompt', run: go('/home') },
-        { id: 'import', group: 'Actions', label: 'Import from GitHub', icon: <GitBranch className={ic} />, words: 'repo', run: go('/import') },
+        { id: 'import', group: 'Actions', label: 'Bring your code from GitHub', icon: <GitBranch className={ic} />, words: 'import repo existing', run: go('/import') },
       );
     list.push(
       { id: 'home', group: 'Go to', label: 'Home', icon: <Home className={ic} />, keys: ['G', 'H'], run: go('/home') },
@@ -215,7 +230,7 @@ export function CommandPalette() {
           },
         });
     return list;
-  }, [p, pid, viewAs, router]);
+  }, [p, pid, viewAs, router, dev]);
 
   const needle = q.trim().toLowerCase();
   const shown = needle

@@ -18,6 +18,8 @@ export default function TourPage() {
     started.current = true;
     const app = useApp.getState();
     if (!app.signedIn) app.signIn('the guided tour', undefined, 'demo');
+    // Arjun, whose project this is, writes code: show developer tools unless you've chosen otherwise.
+    useApp.setState({ devGuess: true });
     if (!useApp.getState().workspace) useApp.getState().setupWorkspace({ name: 'Harborline Insurance', domainJoin: true, runsOn: 'lyzr' });
     useApp.getState().setViewAs('builder');
     const id = useApp.getState().createProject(DEMO_PROMPT);

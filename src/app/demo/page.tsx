@@ -17,6 +17,8 @@ export default function DemoPage() {
     started.current = true;
     const app = useApp.getState();
     if (!app.signedIn) app.signIn('the demo link', undefined, 'demo');
+    // Arjun, whose project this is, writes code: show developer tools unless you've chosen otherwise.
+    useApp.setState({ devGuess: true });
     if (!useApp.getState().workspace) useApp.getState().setupWorkspace({ name: 'Harborline Insurance', domainJoin: true, runsOn: 'lyzr' });
     const id = useApp.getState().quickStartDemo();
     router.replace(`/p/${id}/ready`);

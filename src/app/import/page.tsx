@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from '@/lib/nav';
 import { Check, GitBranch, Search } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { githubUrl, listMyRepos, useServer } from '@/lib/account';
-import { FRAMEWORKS } from '@/lib/seed';
+import { githubUrl, useServer } from '@/lib/account';
+import { DEMO_REPOS, REPO, useRepoChoices } from '@/lib/repos';
 import type { FrameworkId } from '@/lib/types';
 import { AppShell, RequireAuth } from '@/components/shell';
 import { BackLink } from '@/components/frame';
@@ -23,55 +23,6 @@ export default function ImportPage() {
     </RequireAuth>
   );
 }
-
-function demo(repo: string, lang: string, fw: FrameworkId | null, agents: string[], tools: string[], tests: number, screens: string | null): RepoAnalysis {
-  const label = fw ? FRAMEWORKS.find((f) => f.id === fw)!.label : null;
-  return {
-    repo,
-    url: `https://github.com/${repo}`,
-    description: null,
-    defaultBranch: 'main',
-    stars: null,
-    pushedAt: null,
-    languages: [lang],
-    frameworks: fw ? [{ id: fw, label: label!, supported: fw, evidence: 'found in the dependencies' }] : [],
-    primary: fw,
-    agents,
-    tools,
-    screens: screens ? { found: true, label: screens } : { found: false, label: 'None found' },
-    secrets: ['GMAIL_TOKEN', 'DATABASE_URL'],
-    tests: { found: tests > 0, count: tests },
-    fileCount: 20 + agents.length * 6,
-    partial: false,
-    notes: [],
-  } as RepoAnalysis;
-}
-
-/** Repos on the demo GitHub account. Their reading is canned; a pasted public repo is read for real. */
-const DEMO_REPOS: { name: string; meta: string; analysis: RepoAnalysis }[] = [
-  {
-    name: 'harborline/claims-bot',
-    meta: 'Python with CrewAI, updated 2 days ago',
-    analysis: demo('harborline/claims-bot', 'Python', 'crewai', ['agents/intake.py', 'agents/policy.py', 'agents/triage.py'], ['Google APIs (Gmail)', 'Postgres'], 0, null),
-  },
-  {
-    name: 'harborline/kyc-checker',
-    meta: 'Python with LangGraph, updated last week',
-    analysis: demo('harborline/kyc-checker', 'Python', 'langgraph', ['graph/reader.py', 'graph/checker.py'], ['OCR'], 3, null),
-  },
-  {
-    name: 'harborline/broker-mail',
-    meta: 'TypeScript with the OpenAI Agents SDK, updated 3 weeks ago',
-    analysis: demo('harborline/broker-mail', 'TypeScript', 'openai-agents', ['src/agents/broker.ts', 'src/agents/policy.ts'], ['Google APIs (Gmail)', 'OpenAI'], 4, 'Next.js'),
-  },
-  {
-    name: 'arjun-m/agents-playground',
-    meta: 'Python, updated 2 months ago',
-    analysis: demo('arjun-m/agents-playground', 'Python', null, [], [], 0, null),
-  },
-];
-
-const REPO = /^(?:https?:\/\/github\.com\/)?([\w.-]+\/[\w.-]+?)(?:\.git)?\/?$/i;
 
 /** What the reading found, in one plain sentence. */
 function foundLine(a: RepoAnalysis) {
@@ -92,23 +43,7 @@ function Import() {
   const [reading, setReading] = useState(false);
   const [a, setA] = useState<RepoAnalysis | null>(null);
   const [error, setError] = useState('');
-  const [mine, setMine] = useState<{ name: string; meta: string }[] | null>(null);
-
-  useEffect(() => {
-    if (!user?.github) return;
-    listMyRepos()
-      .then((r) =>
-        setMine(
-          r.repos.map((x) => ({
-            name: x.name,
-            meta: [x.language, x.private ? 'private' : null, `updated ${new Date(x.pushedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`].filter(Boolean).join(', '),
-          })),
-        ),
-      )
-      .catch(() => setMine(null));
-  }, [user?.github]);
-
-  const repos = mine ?? DEMO_REPOS.map(({ name, meta }) => ({ name, meta }));
+  const repos = useRepoChoices();
   const needle = q.trim().toLowerCase();
   const shown = useMemo(() => (needle ? repos.filter((r) => r.name.toLowerCase().includes(needle)) : repos), [repos, needle]);
   const pasted = q.trim().match(REPO)?.[1];
@@ -139,6 +74,19 @@ function Import() {
     }
   };
 
+  // Came from "Bring your code" with a repo already named: read it straight away.
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    const asked = new URLSearchParams(window.location.search).get('repo')?.trim();
+    const name = asked?.match(REPO)?.[1];
+    if (!name) return;
+    setQ(name);
+    void pick(name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const doImport = () => {
     if (!a) return false;
     const fw: FrameworkId = a.primary ?? 'langgraph';
@@ -164,7 +112,8 @@ function Import() {
     <div className="mx-auto w-full max-w-[600px] px-4 pb-24 pt-10 sm:px-6">
       <div className="animate-screen-in">
         <BackLink href="/home" />
-        <h1 className="mt-6 text-[30px] font-semibold tracking-[-0.02em]">Import from GitHub</h1>
+        <h1 className="mt-6 text-[30px] font-semibold tracking-[-0.02em]">Bring your code</h1>
+        <p className="mt-2 text-[14.5px] text-ink2">Pick a repo. Architect reads it, finds the agents, and adds tests. Nothing changes in your repo until you accept a pull request.</p>
         {features.github && !user?.github && (
           <p className="mt-2 text-[14.5px] text-ink2">
             <a href={githubUrl('connect', '/import')} className="underline decoration-line2 underline-offset-4 hover:text-ink">

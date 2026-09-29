@@ -10,7 +10,7 @@ Everything behind the product, written so that someone who has never heard of it
 
 | Step | Who | What happens |
 |---|---|---|
-| **Build** | Arjun, the builder | Describe the app in a sentence. Architect asks three questions, shows a four-line plan, and builds it. |
+| **Build** | Arjun, the builder | Describe the app in a sentence, or bring the code he already has. Architect asks three questions, shows a four-line plan, and builds it. |
 | **Prove** | Meera, the expert | She marks answers right or wrong, in plain words. Every correction becomes a test that runs after every change. |
 | **Sign off** | Farah, from IT | She gets one page made from the test results, not from anything the builder typed, and approves with one click. |
 | **Ship** | Arjun | A small pilot group first, then everyone. Going live is press-and-hold, so it never happens by accident. |

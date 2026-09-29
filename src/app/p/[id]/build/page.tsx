@@ -4,6 +4,7 @@ import { useRouter } from '@/lib/nav';
 import { useEffect, useState } from 'react';
 import { ArrowRight, FastForward } from 'lucide-react';
 import { BUILD_STEPS, STEP_MS, useApp } from '@/lib/store';
+import { useDevTools } from '@/lib/hooks';
 import { latestRun } from '@/lib/engine';
 import { frameworkLabel } from '@/lib/seed';
 import type { Project } from '@/lib/types';
@@ -43,6 +44,7 @@ function Build({ p, now }: { p: Project; now: number }) {
   const router = useRouter();
   const skipBuild = useApp((s) => s.skipBuild);
   const [log, setLog] = useState(false);
+  const dev = useDevTools();
   const labels = stepsFor(p);
   const building = p.build.status === 'building';
   const doneAll = p.build.status === 'done';
@@ -104,9 +106,21 @@ function Build({ p, now }: { p: Project; now: number }) {
               );
             })}
           </ol>
+          {dev && !log && (
+            // Developer tools on: the raw log stays in view next to the drawing.
+            <div className="rounded-xl border border-code-line bg-code px-3.5 py-3 font-mono text-[12px] leading-[1.85] text-code-ink" aria-label="Build log" aria-live="polite" data-tour="build-log">
+              {logFor(p, done, result)
+                .slice(-5)
+                .map((l) => (
+                  <div key={l} className={cn('truncate animate-fade-in', l.startsWith('✓') ? '' : 'text-code-dim')}>
+                    {l}
+                  </div>
+                ))}
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={() => setLog((l) => !l)} aria-pressed={log}>
-              {log ? 'Show the drawing' : 'Show the log'}
+            <Button size="sm" variant={dev ? 'secondary' : 'ghost'} onClick={() => setLog((l) => !l)} aria-pressed={log}>
+              {log ? 'Show the drawing' : dev ? 'Full log' : 'Show the log'}
             </Button>
             {building && (
               <Button size="sm" variant="ghost" icon={<FastForward className="h-3.5 w-3.5" />} onClick={() => skipBuild(p.id)} tour="build-skip">

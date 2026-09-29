@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Download, Lock, ShieldCheck, Zap } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { useDevTools } from '@/lib/hooks';
 import { PEOPLE } from '@/lib/seed';
 import { githubUrl, useServer } from '@/lib/account';
 import type { LaunchRules } from '@/lib/types';
@@ -11,7 +12,7 @@ import { Avatar, Button, Card, Chip, Segmented, Toggle } from '@/components/ui';
 import { cn, dateLabel, clock } from '@/lib/utils';
 import { ShellSkeleton } from '@/components/skeletons';
 
-type Section = 'rules' | 'members' | 'connections' | 'audit' | 'usage';
+type Section = 'rules' | 'members' | 'connections' | 'devtools' | 'audit' | 'usage';
 
 export default function SettingsPage() {
   return (
@@ -28,6 +29,7 @@ function Settings() {
     { id: 'rules', label: 'Launch rules' },
     { id: 'members', label: 'People' },
     { id: 'connections', label: 'Connections' },
+    ...(viewAs === 'builder' ? [{ id: 'devtools' as Section, label: 'Developer tools' }] : []),
     { id: 'audit', label: 'Audit trail' },
   ];
   useEffect(() => {
@@ -54,6 +56,7 @@ function Settings() {
           {section === 'rules' && <RulesEditor canEdit={viewAs === 'approver'} />}
           {section === 'members' && <Members />}
           {section === 'connections' && <Connections />}
+          {section === 'devtools' && <DevTools />}
           {section === 'audit' && <Audit />}
           {section === 'usage' && <Usage />}
         </div>
@@ -252,6 +255,58 @@ function Members() {
           </ul>
         </Card>
       )}
+    </div>
+  );
+}
+
+/** One switch: show the code, the build log and API keys up front, or keep them tucked away. */
+function DevTools() {
+  const dev = useDevTools();
+  const chosen = useApp((s) => s.devTools);
+  const setDevTools = useApp((s) => s.setDevTools);
+  const why =
+    chosen !== null ? 'You chose this. It applies to every project.' : dev ? 'On because you signed in with GitHub or brought your code.' : 'Off because you started by describing an app.';
+  const rows: { what: string; on: string; off: string }[] = [
+    { what: 'The code', on: 'A Code tab next to App and Agents', off: 'In the </> menu next to the tabs' },
+    { what: 'The build log', on: 'Beside the drawing while the app builds', off: 'One click away, under the steps' },
+    { what: 'API keys', on: 'On the Ship screen once the app is on Test', off: 'In the </> menu, and in ⌘K' },
+    { what: 'Code in pull requests', on: 'Open', off: 'Folded, one click to open' },
+  ];
+  return (
+    <div className="grid gap-5">
+      <div>
+        <h1 className="text-[24px] font-semibold tracking-tight">Developer tools</h1>
+        <p className="mt-1 text-[14px] text-ink2">For people who work with code. With them off, Architect sticks to the app, the answers and the launch, and the code is still there when you want it.</p>
+      </div>
+      <Card>
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-semibold">Show developer tools</div>
+            <div className="mt-1 text-[13.5px] text-ink3" aria-live="polite">
+              {why}
+            </div>
+          </div>
+          <Toggle checked={dev} onChange={(v) => setDevTools(v)} label="Show developer tools" />
+        </div>
+        <table className="mt-5 w-full border-t border-line text-left text-[13.5px]">
+          <thead>
+            <tr className="text-ink3">
+              <th className="py-2.5 pr-3 font-medium">What</th>
+              <th className={cn('py-2.5 pr-3 font-medium transition-colors', dev && 'text-ink')}>On</th>
+              <th className={cn('py-2.5 font-medium transition-colors', !dev && 'text-ink')}>Off</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.what} className="border-t border-line align-top">
+                <td className="py-2.5 pr-3 font-medium text-ink">{r.what}</td>
+                <td className={cn('py-2.5 pr-3 transition-colors', dev ? 'text-ink' : 'text-ink3')}>{r.on}</td>
+                <td className={cn('py-2.5 transition-colors', dev ? 'text-ink3' : 'text-ink')}>{r.off}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
     </div>
   );
 }

@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { navProgress, useRouter } from '@/lib/nav';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, ChevronDown, CloudCheck, CloudOff, Compass, FolderKanban, Gauge, Home, Keyboard, Loader2, LogOut, RotateCcw, Search, Settings, X } from 'lucide-react';
+import { Check, ChevronDown, CloudCheck, CloudOff, Code2, Compass, FolderKanban, Gauge, Home, Keyboard, Loader2, LogOut, RotateCcw, Search, Settings, X } from 'lucide-react';
 import { useApp } from '@/lib/store';
-import { useHydrated } from '@/lib/hooks';
+import { useDevTools, useHydrated } from '@/lib/hooks';
 import { PEOPLE } from '@/lib/seed';
 import { logOutRequest, useServer } from '@/lib/account';
 import { homeFor } from '@/lib/routes';
@@ -108,6 +108,8 @@ export function UserMenu() {
   const resetDemo = useApp((s) => s.resetDemo);
   const signOut = useApp((s) => s.signOut);
   const viewAs = useApp((s) => s.viewAs);
+  const setDevTools = useApp((s) => s.setDevTools);
+  const dev = useDevTools();
   const router = useRouter();
   const me = PEOPLE.find((p) => p.role === viewAs)!;
   return (
@@ -125,6 +127,18 @@ export function UserMenu() {
       items={[
         { id: 'tour', label: 'Take the guided tour', icon: <Compass className="h-4 w-4" />, onSelect: () => router.push('/tour') },
         { id: 'keys', label: 'Search and commands', icon: <Keyboard className="h-4 w-4" />, sub: 'Press ⌘K or Ctrl K anywhere', onSelect: () => usePalette.getState().setOpen(true) },
+        ...(viewAs === 'builder'
+          ? [
+              {
+                id: 'devtools',
+                label: 'Developer tools',
+                sub: dev ? 'Code, build log and API keys up front' : 'Tucked away. Select to show them',
+                icon: <Code2 className="h-4 w-4" />,
+                checked: dev,
+                onSelect: () => setDevTools(!dev),
+              },
+            ]
+          : []),
         {
           id: 'reset',
           label: authMode === 'account' ? 'Start over' : 'Reset the demo',

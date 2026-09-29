@@ -37,6 +37,8 @@ If you read three things: **§1 The problem**, **§9 Success criteria** (how we'
 | First working prototype: build, prove, sign off, ship, learn; real accounts, GitHub and AI when keys are set | 2026-09-28 | VVRaider23 | Tab-based project screen |
 | Redesign: grey-black look, 22 one-job screens, small interactions, press-and-hold to go live | 2026-09-29 | VVRaider23 | Replaced the tab-based screen after our own walkthrough found it confusing (see §1.3, 🔴 row) |
 | This document set written in the Builder OS format | 2026-09-29 | VVRaider23 | |
+| The welcome page always shows; placeholders and a progress line between screens | 2026-09-29 | VVRaider23 | Project moves measured at ~630 ms of frozen screen before, 10-50 ms after (with a 300 ms network delay) |
+| Two ways in, sign-in that follows them, and a Developer tools switch | 2026-09-29 | VVRaider23 | Chosen over keeping a copy of today's Architect next to 2.0 (see §12, "One app, two ways in") |
 
 ---
 
@@ -252,6 +254,20 @@ Arjun describes the app and Architect builds it; **the Answer Key reruns after e
 - **The loop is the menu.** A project's only navigation is Build · Prove · Sign off · Ship · Learn, and each step shows whether it's done, happening now or locked. You always know where you are.
 - **Trust is earned step by step.** Preview (only you) → Test (a pilot group) → Live (everyone), each gated by evidence.
 
+### One app, two ways in (and why not a "classic" copy)
+
+The brief asks the next Architect to serve non-technical builders and developers. We looked at three ways to do that:
+
+| Option | What it is | Verdict |
+|---|---|---|
+| A · Two apps | Keep a copy of today's Architect for non-technical builders, and 2.0 for developers | **No.** It splits the pitch ("pick a version"), starts with "are you technical?", doubles every feature and fix, and would be our guess at a product we don't have the code for |
+| B · One app, two ways in | **Describe it** or **Bring your code** on the welcome page and Home, and a **Developer tools** switch that shows the code, the raw build log and API keys up front, or tucks them away | **Yes.** Same app, same data; only how much you see changes. Nobody is asked what they are: the way they came in is the signal |
+| C · A guide for today's users | "Coming from today's Architect?" card mapping old places to new | Later, if current users can't find what they know |
+
+How B decides without asking: 🟢 in the prototype
+- **Sign-in follows the way in.** "Describe it" opens with an email box and skips the GitHub question; "Bring your code" puts GitHub first, because Architect needs it to read the code.
+- **Developer tools guess, then obey.** On after a GitHub sign-in or bringing code; off after "Describe it" with email. One switch in Settings, the account menu and ⌘K wins over the guess. Off never removes anything: the code and the API sit in a </> menu next to the tabs.
+
 ### The brief's two questions, answered
 
 **Why would a non-technical person pick this over Replit, Lovable or Emergent?** 🔵
@@ -284,14 +300,17 @@ Keep them. They're great at writing code, and your code stays in your GitHub in 
 | 11 | Guided tour | A narrator builds a real app with you and can do each step | HIGH | MED | VVRaider23 |
 | 12 | Command palette | ⌘K or Ctrl+K: jump anywhere or run any action | MED | LOW | VVRaider23 |
 | 13 | Real accounts, GitHub, AI | Turned on by settings; demo mode without them | MED | MED | VVRaider23 |
+| 14 | Two ways in, and Developer tools | Describe it or bring your code; the code, build log and API keys up front for developers, tucked away for everyone else | HIGH | LOW | VVRaider23 |
+| 15 | Instant screens | Placeholders shaped like the next screen, a thin progress line, and every project screen loaded in the background | MED | LOW | VVRaider23 |
 
 **P2: waits for a pilot customer**
 
 | # | Feature | Trigger |
 |---|---|---|
-| 14 | Real hosting | A pilot needs a real deployment |
-| 15 | Real connections (Gmail, claims system, Slack) | A pilot names the systems |
-| 16 | More domains than insurance claims | Two pilots outside insurance |
+| 16 | Real hosting | A pilot needs a real deployment |
+| 17 | Real connections (Gmail, claims system, Slack) | A pilot names the systems |
+| 18 | More domains than insurance claims | Two pilots outside insurance |
+| 19 | "Coming from today's Architect?" guide | Current Architect users can't find what they know |
 
 **Deliberately not building:** a code editor (the developer has one), billing, a marketplace, a mobile app.
 
@@ -319,7 +338,7 @@ Not wired to an analytics tool yet (named gap). Every event below is already rec
 
 One line per person here; the full step-by-step flows with diagrams are in [journeys.md](journeys.md).
 
-- **Arjun (builder):** sign in → one GitHub question → describe the app → 3 questions → plan → build → "12 of 15 match" → see what's wrong → invite Meera → Fix all → merge the pull request → ask Farah → deploy to Test → hold to go live → use it from code.
+- **Arjun (builder):** describe the app (or bring his code) → sign in (email goes straight in; GitHub asks one question about saving code) → 3 questions → plan → build → "12 of 15 match" → see what's wrong → invite Meera → Fix all → merge the pull request → ask Farah → deploy to Test → hold to go live → use it from code.
 - **Meera (expert):** open the link → one card at a time → Right, Wrong (then pick the right answer) or Not sure → "All done".
 - **Farah (IT):** open the request → read the ticked facts → add a condition if needed → Approve → stamp.
 - **Anyone:** ⌘K to jump or act; the guided tour to see it all in three minutes.

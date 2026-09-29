@@ -130,3 +130,14 @@ export function ProjectTopBar({ p, section, now }: { p: Project; section: StepKe
     </header>
   );
 }
+
+export type WorkTab = 'app' | 'agents' | 'code';
+
+/** The App, Agents and Code tabs. Code only shows with developer tools on (or while you're on it). */
+export function workTabs(dev: boolean, tab: WorkTab) {
+  return [
+    { id: 'app' as WorkTab, label: 'App' },
+    { id: 'agents' as WorkTab, label: 'Agents', tour: 'tab-agents' },
+    ...(dev || tab === 'code' ? [{ id: 'code' as WorkTab, label: 'Code', tour: 'tab-code' }] : []),
+  ];
+}

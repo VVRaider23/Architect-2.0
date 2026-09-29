@@ -4,6 +4,7 @@ import { useRouter } from '@/lib/nav';
 import { GitBranch } from 'lucide-react';
 import { useApp } from '@/lib/store';
 import { githubUrl, useServer } from '@/lib/account';
+import { isWorkEmail, landing, workspaceName } from '@/lib/start';
 import { Logo, RequireAuth, TopBar, UserMenu } from '@/components/shell';
 import { ActionButton, Button, Tag } from '@/components/ui';
 import { GetInSkeleton } from '@/components/skeletons';
@@ -14,16 +15,6 @@ export default function SetupPage() {
       <Setup />
     </RequireAuth>
   );
-}
-
-const PERSONAL = /^(gmail|googlemail|yahoo|outlook|hotmail|live|icloud|me|proton|protonmail|github)\b/i;
-
-/** A sensible workspace name from the email address, so there is nothing to fill in. */
-function workspaceName(email: string, accountName?: string) {
-  const domain = email.split('@')[1] || 'harborline.com';
-  if (domain.startsWith('harborline')) return 'Harborline Insurance';
-  if (!PERSONAL.test(domain) && domain.includes('.')) return domain.split('.')[0].replace(/^\w/, (c) => c.toUpperCase());
-  return accountName ? `${accountName.split(' ')[0]}’s workspace` : 'My workspace';
 }
 
 /** Screen 3 · GitHub. One job: decide where the code lives. The workspace itself is set up for you. */
@@ -37,9 +28,9 @@ function Setup() {
   const realGithub = features.github;
 
   const finish = (github?: string) => {
-    const domain = email.split('@')[1] || '';
-    setupWorkspace({ name: workspaceName(email, user?.name ?? undefined), domainJoin: !PERSONAL.test(domain), runsOn: 'lyzr', github });
-    router.push('/home');
+    setupWorkspace({ name: workspaceName(email, user?.name ?? undefined), domainJoin: isWorkEmail(email), runsOn: 'lyzr', github });
+    // Home for an idea; the repo you brought, if you came in with code.
+    router.push(landing());
   };
 
   return (

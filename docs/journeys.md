@@ -16,17 +16,17 @@ Each journey is one person trying to get one thing done, from the first click to
 
 ### J1 — Arjun: build the first app from a sentence
 
-**Entry points:** the welcome page (typing an idea there saves it for later), Home, or the guided tour.
+**Entry points:** the welcome page ("Describe it" is the first of the two ways in; typing an idea there saves it for later), Home, or the guided tour.
 
 ```mermaid
 flowchart TD
-    S1[S1 Welcome] -->|types an idea, presses Enter| S2[S2 Sign in]
+    S1[S1 Welcome: Describe it] -->|types an idea, presses Enter| S2[S2 Sign in: email box first]
     S1 -->|Take the tour| T[S29 Guided tour]
-    S2 -->|Continue with GitHub| S3[S3 GitHub access]
     S2 -->|Continue with email| E{Email valid?}
     E -->|no: shake + hint| S2
-    E -->|yes| S3
-    S3 -->|Allow code pushes or Not now| S4[S4 Home]
+    E -->|yes: workspace made for you| S4[S4 Home]
+    S2 -->|or Continue with GitHub| S3[S3 GitHub access]
+    S3 -->|Allow code pushes or Not now| S4
     S4 -->|Guided: Enter| S6[S6 Three questions]
     S4 -->|One Shot: Enter| S8[S8 Building]
     S6 -->|answer 3 with keys 1-3| S7[S7 The plan]
@@ -38,9 +38,9 @@ flowchart TD
 ```
 
 **Steps**
-1. **S1 Welcome.** One headline, one box. Typing wakes up the send button; Enter starts. The idea is saved in the browser so it survives signing in.
-2. **S2 Sign in.** Continue with GitHub (one click), or Continue with email. A bad email shakes the form and says exactly what's missing ("Add the full address, like arjun@harborline.com"). Already signed in? It skips straight to Home.
-3. **S3 GitHub access.** One question: save the code to GitHub? The workspace is created for you with sensible defaults, so there is nothing else to fill in.
+1. **S1 Welcome.** One headline, two ways in (**Describe it** · **Bring your code**), one box. Typing wakes up the send button; Enter starts. The idea is saved in the browser so it survives signing in.
+2. **S2 Sign in.** Someone who described an app gets the email box ready to type in, with GitHub as the second option. A bad email shakes the form and says exactly what's missing ("Add the full address, like arjun@harborline.com"). Signing in with email skips S3: the workspace is made from the email address, and GitHub can be connected later.
+3. **S3 GitHub access.** Only for people who signed in with GitHub. One question: save the code to GitHub? The workspace is created for you with sensible defaults, so there is nothing else to fill in.
 4. **S4 Home.** "What should we build, Arjun?" The saved idea is already in the box. Guided (questions and a plan first) or One Shot (build straight away).
 5. **S6 Three questions.** One at a time; press 1, 2 or 3. Back goes to the previous question.
 6. **S7 The plan.** Four plain lines, the framework (a menu), the cost ("About 140 credits"), and details hidden behind "See every agent and screen". Nothing is built until **Build it**.
@@ -51,11 +51,14 @@ flowchart TD
 
 ### J2 — Arjun: bring in a repo he already has
 
-**Entry points:** Home → "Import from GitHub instead", or the command palette.
+**Entry points:** "Bring your code" on the welcome page or on Home (the second way in), or the command palette.
 
 ```mermaid
 flowchart TD
-    S4[S4 Home] --> S5[S5 Import]
+    W[S1 Welcome: Bring your code] -->|pastes a repo, or leaves it empty| SI[S2 Sign in: GitHub first]
+    SI -->|Continue with GitHub| G[S3 GitHub access] --> S5[S5 Bring your code]
+    SI -->|or Continue with email| S5
+    S4[S4 Home: Bring your code] -->|pastes a repo or picks one of 3| S5
     S5 -->|types to filter, or pastes owner/repo| L{Found?}
     L -->|no| N[No repo matches: check spelling or paste owner/repo]
     N --> S5
@@ -66,9 +69,9 @@ flowchart TD
     S7 -->|Build it| S8[S8 Building]
 ```
 
-**Steps:** search or paste a repo → pick it → a one-line summary of what was found ("Found 3 agents written in CrewAI. There are no tests yet, so we'll start an Answer Key with your experts.") → the button morphs from "Pick a repo to import" to "Import claims-bot" to "Imported" → a plan that keeps the existing agents and only adds what's missing.
+**Steps:** a repo named on the welcome page or Home is read straight away; otherwise search or paste a repo → pick it → a one-line summary of what was found ("Found 3 agents written in CrewAI. There are no tests yet, so we'll start an Answer Key with your experts.") → the button morphs from "Pick a repo to import" to "Import claims-bot" to "Imported" → a plan that keeps the existing agents and only adds what's missing.
 
-**Exit states:** success is the plan. With GitHub connected, the list shows your real repos; any public repo can be pasted and is read for real.
+**Exit states:** success is the plan. With GitHub connected, the list shows your real repos; any public repo can be pasted and is read for real. A repo that isn't written as owner/name or a github.com link gets a plain error before anything else happens. Bringing code turns developer tools on (see Decisions).
 
 ### J3 — Arjun and Meera: prove the answers
 
@@ -205,31 +208,34 @@ flowchart TD
 
 ## Screen inventory
 
-Every screen the journeys use. "Loading" on signed-in screens means: the logo and "Loading…" appear for a moment while saved work loads. Signed-out visitors are sent to S2; signed-in visitors without a workspace are sent to S3.
+Every screen the journeys use. **Loading** means: the moment you click, a thin line appears at the top if the next screen takes more than a beat, and the next screen's frame appears with grey shapes where its content goes (the top bar is the real one, so only the middle changes). Every screen of a project is loaded in the background as soon as you open the project, so most moves are instant and show neither. Signed-out visitors are sent to S2; signed-in visitors without a workspace are sent to S3.
 
 ### S1 — Welcome · `/`
 **Purpose:** say what this is, and start by typing. **Appears in:** J1, J7.
-**Contents:** headline "Build AI agent apps your experts trust", one line of explanation, the prompt box, "Or take the 3-minute tour", "See a finished example".
+**Contents:** headline "Build AI agent apps your experts trust", one line of explanation, the two ways in (**Describe it** · **Bring your code**), the box for the chosen way, "Or take the 3-minute tour", "See a finished example".
 
 | State | Behaviour |
 |---|---|
 | Empty box | Send button asleep (grey); the hint "Press Enter to start" hidden |
 | Typing | Send button wakes (iris, glow); hint appears |
-| Already signed in | Goes straight to Home |
+| Bring your code | One line for a repo; a bad one gets a red border and a plain fix ("Try owner/name, or paste its github.com link") |
+| Already signed in | The page still shows. Top right says "Your projects"; typing an idea goes straight to its three questions, a repo straight to S5 |
 
 ### S2 — Sign in · `/signin`
 **Purpose:** get in without thinking. **Appears in:** J1.
-**Contents:** "Sign in to start building", the saved idea, Continue with GitHub, Continue with email (opens a small form), "Open a finished example".
+**Contents:** "Sign in to start building" (or "Sign in to bring your code"), the saved idea or repo, the email form and Continue with GitHub in the order that fits the way in, "Open a finished example".
 
 | State | Behaviour |
 |---|---|
+| Came in with "Describe it" (or directly) | Email box first, focused; "or"; Continue with GitHub, with one line on why a developer might pick it |
+| Came in with "Bring your code" | Continue with GitHub first (Architect needs it to read the code); Continue with email second |
 | Bad email | Form shakes; one-line hint in red |
 | Real accounts on | Password field and "Create an account" appear |
 | GitHub sign-in | Button says "Opening GitHub" while redirecting |
 | GitHub error | The error from GitHub is shown under the buttons |
 
 ### S3 — GitHub access · `/setup`
-**Purpose:** decide where the code lives. **Appears in:** J1.
+**Purpose:** decide where the code lives. **Appears in:** J1, J2, only after signing in with GitHub.
 **Contents:** "Save your code to GitHub?", the connected account, Allow code pushes, Not now.
 
 | State | Behaviour |
@@ -239,16 +245,17 @@ Every screen the journeys use. "Loading" on signed-in screens means: the logo an
 
 ### S4 — Home · `/home`
 **Purpose:** say what to build. **Appears in:** J1, J2, J4, J5.
-**Contents (Arjun):** "What should we build, Arjun?", prompt box with + menu (attach files, Studio agents, prompt library), Guided / One Shot, three starters, Import from GitHub, "Not sure what to build?", up to 3 recent projects.
+**Contents (Arjun):** "What should we build, Arjun?", the two ways in. **Describe it:** prompt box with + menu (attach files, Studio agents, prompt library), Guided / One Shot, three starters, "Not sure what to build?". **Bring your code:** one line for a repo and three of your repos as quick picks. Then up to 3 recent projects.
 **Contents (Meera / Farah):** one card: what's waiting for them, or a calm "Nothing to check / decide right now".
 
 | State | Behaviour |
 |---|---|
 | First visit | No Recent section |
 | Idea from S1 | Pre-filled in the box |
+| Came back after bringing code | "Bring your code" is already chosen (the way used last) |
 | Meera, nothing waiting | "When Arjun sends answers for you to check, they show up here." |
 
-### S5 — Import · `/import`
+### S5 — Bring your code · `/import`
 **Purpose:** pick the repo. **Appears in:** J2.
 
 | State | Behaviour |
@@ -258,6 +265,7 @@ Every screen the journeys use. "Loading" on signed-in screens means: the logo an
 | Reading | Spinner in the chosen row; button says "Reading the repo…" |
 | Error | The reason in a red note; pick again |
 | GitHub not connected (real mode) | "Connect GitHub to see your own repos" link |
+| Arrived with a repo named | It is read straight away |
 
 ### S6 — Three questions · `/p/[id]/questions`
 **Purpose:** answer three quick questions. **Appears in:** J1.
@@ -283,6 +291,7 @@ Every screen the journeys use. "Loading" on signed-in screens means: the logo an
 | In progress | Drawing fills in; steps tick with times; "About N seconds left"; Skip the wait |
 | Done | "Your app is built", all ticks, "See the results" |
 | Log view | Raw log lines instead of the drawing |
+| Developer tools on | The last lines of the raw log stay in view under the steps; the button says "Full log" |
 
 ### S9 — Ready · `/p/[id]/ready`
 **Purpose:** did it work? **Appears in:** J1.
@@ -294,7 +303,7 @@ Every screen the journeys use. "Loading" on signed-in screens means: the logo an
 
 ### S10 — Your app · `/p/[id]/app`
 **Purpose:** does it look right? Change anything by pointing at it. **Appears in:** J1.
-**Contents:** chat on the left; App / Agents / Code tabs; the generated app (light); desktop / phone switch; Select; a console pill.
+**Contents:** chat on the left; App / Agents / Code tabs (Code only with developer tools on; otherwise a </> button holds "See the code", "Use it from your code" and "Always show them"); the generated app (light); desktop / phone switch; Select; a console pill.
 
 | State | Behaviour |
 |---|---|
@@ -319,6 +328,7 @@ Every screen the journeys use. "Loading" on signed-in screens means: the logo an
 | A change selected in the branch menu | Shows the diff for that change |
 | Real GitHub | "Save to GitHub" or "On GitHub" |
 | Demo | The simulated repo name |
+| Developer tools off | Reached from the </> menu or ⌘K; the Code tab shows while you're on it |
 
 ### S13 — What's wrong · `/p/[id]/prove`
 **Purpose:** which answers are wrong, and fix them. **Appears in:** J3.
@@ -449,3 +459,8 @@ Every screen the journeys use. "Loading" on signed-in screens means: the logo an
 | 10 | How is a change made from the app preview? | Point-and-ask: Select, click the part, type what should change | 2026-09-29 | |
 | 11 | What does the palette show? | Only actions that make sense now, plus places, files and people | 2026-09-29 | |
 | 12 | Where does an API key appear in code? | Never. Examples read `ARCHITECT_KEY` from the environment | 2026-09-29 | |
+| 13 | The first screen, for someone who's signed in | Always the welcome page; "Your projects" top right, and an idea goes straight to its questions (it used to jump to Home) | 2026-09-29 | |
+| 14 | What shows between screens? | A thin line at the top if a move takes more than a beat, placeholders shaped like the next screen, and every project screen loaded in the background | 2026-09-29 | Moves still feel slow on the live site |
+| 15 | Should today's Architect sit next to 2.0 as a second, "classic" app? | No. One app with two ways in (Describe it · Bring your code) and a Developer tools switch. A second app splits the pitch, doubles the work and starts with "are you technical?" | 2026-09-29 | Current Architect users can't find what they know; then add a "Coming from today's Architect?" guide |
+| 16 | Who sees the code up front? | Developer tools: on after a GitHub sign-in or bringing code, off after "Describe it" with email. One switch in Settings, the account menu and ⌘K. Off means tucked in the </> menu, never removed | 2026-09-29 | Non-developers go looking for the code, or developers miss it |
+| 17 | Which sign-in comes first? | The one that fits the way in: email for "Describe it", GitHub for "Bring your code". Email sign-ins skip the GitHub question | 2026-09-29 | Most people in a pilot sign in with GitHub anyway |

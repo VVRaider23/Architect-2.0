@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { ArrowRight, ExternalLink, Terminal } from 'lucide-react';
 import { useApp } from '@/lib/store';
+import { useDevTools } from '@/lib/hooks';
 import { latestRun } from '@/lib/engine';
 import { approvedFor, pendingRequest } from '@/lib/stage';
 import type { Project } from '@/lib/types';
@@ -16,6 +17,7 @@ export default function LivePage() {
 
 /** Screen 19 · Go live. One job: make it available to everyone, on purpose. Press and hold, so it never happens by accident. */
 function Live({ p, now }: { p: Project; now: number }) {
+  const dev = useDevTools();
   const deploy = useApp((s) => s.deploy);
   const liveOk = approvedFor(p, 'live');
   const pending = pendingRequest(p);
@@ -79,9 +81,11 @@ function Live({ p, now }: { p: Project; now: number }) {
           <Button variant="primary" size="lg" href={`/apps/${p.id}?env=live`} target="_blank" icon={<ExternalLink className="h-4 w-4" />}>
             Open the live app
           </Button>
-          <Button size="lg" href={`/p/${p.id}/api`} icon={<Terminal className="h-4 w-4" />}>
-            Use it from your code
-          </Button>
+          {dev && (
+            <Button size="lg" href={`/p/${p.id}/api`} icon={<Terminal className="h-4 w-4" />}>
+              Use it from your code
+            </Button>
+          )}
         </div>
       )}
     </FocusScreen>
