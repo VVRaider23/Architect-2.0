@@ -67,12 +67,12 @@ export interface AppTheme {
 
 /** A few of Architect's theme presets for the generated app. */
 export const APP_THEMES: AppTheme[] = [
-  { id: 'harbor', name: 'Harbor', primary: '#0F3B5F', hover: '#0B2E4A', soft: '#E7EEF6', font: '"IBM Plex Sans", system-ui, sans-serif' },
-  { id: 'evergreen', name: 'Evergreen', primary: '#1F5E4A', hover: '#174A3A', soft: '#E5F1EC', font: '"IBM Plex Sans", system-ui, sans-serif' },
-  { id: 'plum', name: 'Plum', primary: '#5B2A86', hover: '#48206B', soft: '#F0E8F7', font: '"IBM Plex Sans", system-ui, sans-serif' },
-  { id: 'ember', name: 'Ember', primary: '#9A3412', hover: '#7C2A0E', soft: '#FBEDE6', font: '"IBM Plex Sans", system-ui, sans-serif' },
-  { id: 'graphite', name: 'Graphite', primary: '#27272A', hover: '#18181B', soft: '#EEEEF0', font: '"IBM Plex Mono", ui-monospace, monospace' },
-  { id: 'ocean', name: 'Ocean', primary: '#0E7490', hover: '#0B5C72', soft: '#E3F3F7', font: '"IBM Plex Sans", system-ui, sans-serif' },
+  { id: 'harbor', name: 'Harbor', primary: '#0F3B5F', hover: '#0B2E4A', soft: '#E7EEF6', font: 'var(--font-geist-sans), system-ui, sans-serif' },
+  { id: 'evergreen', name: 'Evergreen', primary: '#1F5E4A', hover: '#174A3A', soft: '#E5F1EC', font: 'var(--font-geist-sans), system-ui, sans-serif' },
+  { id: 'plum', name: 'Plum', primary: '#5B2A86', hover: '#48206B', soft: '#F0E8F7', font: 'var(--font-geist-sans), system-ui, sans-serif' },
+  { id: 'ember', name: 'Ember', primary: '#9A3412', hover: '#7C2A0E', soft: '#FBEDE6', font: 'var(--font-geist-sans), system-ui, sans-serif' },
+  { id: 'graphite', name: 'Graphite', primary: '#27272A', hover: '#18181B', soft: '#EEEEF0', font: 'var(--font-geist-mono), ui-monospace, monospace' },
+  { id: 'ocean', name: 'Ocean', primary: '#0E7490', hover: '#0B5C72', soft: '#E3F3F7', font: 'var(--font-geist-sans), system-ui, sans-serif' },
 ];
 
 export const themeById = (id?: string) => APP_THEMES.find((t) => t.id === id) ?? APP_THEMES[0];

@@ -34,12 +34,12 @@ function DeployedApp() {
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="flex h-9 shrink-0 items-center gap-2.5 bg-[#1D1C1A] px-4 text-[12px] text-[#C9C5BC]">
+      <div className="flex h-9 shrink-0 items-center gap-2.5 bg-bg px-4 text-[12px] text-ink2">
         <LogoMark size={18} />
         <span className="hidden sm:inline">Built with Architect</span>
-        <span className="truncate font-mono text-[11.5px] text-white">https://{d.url}</span>
+        <span className="truncate font-mono text-[11.5px] text-ink">https://{d.url}</span>
         <div className="flex-1" />
-        <Link href={`/p/${p.id}?tab=${env === 'preview' ? 'preview' : env === 'live' ? 'live' : 'ship'}`} className="inline-flex items-center gap-1 whitespace-nowrap text-white hover:underline">
+        <Link href={`/p/${p.id}?tab=${env === 'preview' ? 'preview' : env === 'live' ? 'live' : 'ship'}`} className="inline-flex items-center gap-1 whitespace-nowrap text-ink hover:underline">
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Architect
         </Link>
       </div>

@@ -76,16 +76,16 @@ export function AgentsTab({ p }: { p: Project }) {
         className="cursor-pointer focus:outline-none"
       >
         <rect x={x} y={y} width={NODE_W} height={NODE_H} rx="12" style={{ fill: on ? 'rgb(var(--accent-soft))' : 'rgb(var(--surface))', stroke: on ? 'rgb(var(--accent))' : ok ? 'rgb(var(--line2))' : 'rgb(var(--bad))' }} strokeWidth={on ? 2 : 1.3} />
-        <text x={x + 14} y={y + 25} fontSize="13.5" fontWeight="600" fill="#1D1C1A" fontFamily="IBM Plex Sans, sans-serif">
+        <text x={x + 14} y={y + 25} fontSize="13.5" fontWeight="600" style={{ fill: 'rgb(var(--ink))' }} fontFamily="var(--font-geist-sans), sans-serif">
           {AGENT_NAME[id]}
         </text>
-        <text x={x + 14} y={y + 45} fontSize="11.5" fill="#57544E" fontFamily="IBM Plex Sans, sans-serif">
+        <text x={x + 14} y={y + 45} fontSize="11.5" style={{ fill: 'rgb(var(--ink2))' }} fontFamily="var(--font-geist-sans), sans-serif">
           {agent.model}
         </text>
         {run && (
           <g>
-            <rect x={x + NODE_W - 64} y={y + 34} width="52" height="20" rx="10" fill={ok ? '#E4F2E9' : '#FBE7E4'} />
-            <text x={x + NODE_W - 38} y={y + 48} textAnchor="middle" fontSize="11" fontWeight="600" fill={ok ? '#1F7A45' : '#B3261E'} fontFamily="IBM Plex Mono, monospace">
+            <rect x={x + NODE_W - 64} y={y + 34} width="52" height="20" rx="10" style={{ fill: ok ? 'rgb(var(--ok-soft))' : 'rgb(var(--bad-soft))' }} />
+            <text x={x + NODE_W - 38} y={y + 48} textAnchor="middle" fontSize="11" fontWeight="600" style={{ fill: ok ? 'rgb(var(--ok))' : 'rgb(var(--bad))' }} fontFamily="var(--font-geist-mono), monospace">
               {sc.pass}/{sc.total}
             </text>
           </g>
@@ -114,18 +114,18 @@ export function AgentsTab({ p }: { p: Project }) {
           <svg viewBox={`0 0 ${width} 250`} className="mx-auto w-full min-w-[640px] max-w-[900px]" role="group" aria-label="Agent map">
             <defs>
               <marker id="agent-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#7C786F" />
+                <path d="M 0 0 L 10 5 L 0 10 z" style={{ fill: 'rgb(var(--ink3))' }} />
               </marker>
             </defs>
-            <line x1={width / 2} y1={16 + NODE_H} x2={width / 2} y2={128} stroke="#CBC7BD" strokeWidth="1.5" />
-            <line x1={centers[0]} y1={128} x2={centers[3]} y2={128} stroke="#CBC7BD" strokeWidth="1.5" />
+            <line x1={width / 2} y1={16 + NODE_H} x2={width / 2} y2={128} style={{ stroke: 'rgb(var(--line2))' }} strokeWidth="1.5" />
+            <line x1={centers[0]} y1={128} x2={centers[3]} y2={128} style={{ stroke: 'rgb(var(--line2))' }} strokeWidth="1.5" />
             {centers.map((c) => (
-              <line key={c} x1={c} y1={128} x2={c} y2={160} stroke="#CBC7BD" strokeWidth="1.5" />
+              <line key={c} x1={c} y1={128} x2={c} y2={160} style={{ stroke: 'rgb(var(--line2))' }} strokeWidth="1.5" />
             ))}
             {xs.slice(0, 3).map((x) => (
-              <line key={x} x1={x + NODE_W + 4} y1={160 + NODE_H / 2} x2={x + NODE_W + 34} y2={160 + NODE_H / 2} stroke="#7C786F" strokeWidth="1.5" markerEnd="url(#agent-arrow)" />
+              <line key={x} x1={x + NODE_W + 4} y1={160 + NODE_H / 2} x2={x + NODE_W + 34} y2={160 + NODE_H / 2} style={{ stroke: 'rgb(var(--ink3))' }} strokeWidth="1.5" markerEnd="url(#agent-arrow)" />
             ))}
-            <text x={width / 2 + 10} y={112} fontSize="11" fill="#7C786F" fontFamily="IBM Plex Sans, sans-serif">
+            <text x={width / 2 + 10} y={112} fontSize="11" style={{ fill: 'rgb(var(--ink3))' }} fontFamily="var(--font-geist-sans), sans-serif">
               routes each claim, keeps the record
             </text>
             {node('triage_lead', mx, 16)}

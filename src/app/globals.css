@@ -2,31 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * The palette lives here, as RGB triplets so Tailwind can add opacity.
+ * Default: the grey-black "night" look for builders.
+ * .paper: a light look for people who never touch code (Meera, Farah) and for print.
+ * Soft and line tints are pre-blended over the background so they stay crisp at any opacity.
+ */
 :root {
+  color-scheme: dark;
+  --bg: 11 12 16; /* #0B0C10 */
+  --surface: 15 16 22; /* #0F1016 panels */
+  --surface2: 21 23 32; /* #151720 raised */
+  --sunken: 27 30 41; /* #1B1E29 hover and quiet fills */
+  --line: 33 36 49; /* #212431 */
+  --line2: 44 48 65; /* #2C3041 */
+  --ink: 236 237 243; /* #ECEDF3 */
+  --ink2: 164 167 186; /* #A4A7BA */
+  --ink3: 128 131 153; /* #808399 */
+  --accent: 139 147 255; /* #8B93FF iris */
+  --accent-ink: 201 205 255; /* #C9CDFF text in the accent family */
+  --accent-soft: 28 30 47;
+  --accent-line: 60 63 107;
+  --on-accent: 11 12 16;
+  --ok: 61 214 140; /* #3DD68C pass */
+  --ok-soft: 17 36 31;
+  --ok-line: 28 81 58;
+  --on-ok: 6 23 15;
+  --bad: 255 107 107; /* #FF6B6B fail */
+  --bad-soft: 40 23 27;
+  --bad-line: 94 44 47;
+  --on-bad: 30 8 10;
+  --warn: 245 185 74; /* #F5B94A needs attention */
+  --warn-soft: 39 33 23;
+  --warn-line: 91 71 36;
+  --code: 9 10 14;
+  --code-ink: 212 214 226;
+  --code-dim: 112 116 138;
+  --code-line: 33 36 49;
+  --code-add: 16 38 30;
+  --code-del: 44 20 23;
+  --shadow: 0 0 0;
+
+  /* Motion: fast out, gentle stop. Nothing loops except loaders. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.paper {
   color-scheme: light;
-  /* The palette, as RGB triplets so Tailwind can add opacity. Change the look here. */
-  --bg: 244 242 238;
+  --bg: 246 245 241; /* #F6F5F1 */
   --surface: 255 255 255;
-  --surface2: 249 248 245;
-  --sunken: 239 237 232;
-  --line: 227 224 216;
-  --line2: 203 199 189;
-  --ink: 29 28 26;
-  --ink2: 87 84 78;
-  --ink3: 124 120 111;
-  --accent: 36 70 181;
-  --accent-ink: 27 54 144;
-  --accent-soft: 232 237 251;
-  --accent-line: 185 198 240;
-  --ok: 31 122 69;
-  --ok-soft: 228 242 233;
-  --ok-line: 169 211 184;
-  --bad: 179 38 30;
-  --bad-soft: 251 231 228;
+  --surface2: 243 242 237;
+  --sunken: 236 235 229;
+  --line: 228 226 219;
+  --line2: 211 209 200;
+  --ink: 23 24 30;
+  --ink2: 85 88 103;
+  --ink3: 107 110 126;
+  --accent: 75 85 217; /* #4B55D9 */
+  --accent-ink: 59 68 184;
+  --accent-soft: 236 237 251;
+  --accent-line: 197 201 244;
+  --on-accent: 255 255 255;
+  --ok: 17 112 58;
+  --ok-soft: 227 242 232;
+  --ok-line: 167 219 188;
+  --on-ok: 255 255 255;
+  --bad: 194 54 47;
+  --bad-soft: 251 233 231;
   --bad-line: 237 181 174;
-  --warn: 138 90 0;
+  --on-bad: 255 255 255;
+  --warn: 154 91 0;
   --warn-soft: 251 240 217;
   --warn-line: 232 205 143;
+  --shadow: 23 24 30;
 }
 
 html,
@@ -36,18 +87,30 @@ body {
 }
 
 body {
-  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'] {
+  touch-action: manipulation;
 }
 
 ::selection {
-  background: rgb(var(--accent-soft));
+  background: rgb(var(--accent) / 0.28);
 }
 
 :focus-visible {
   outline: 2px solid rgb(var(--accent));
   outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 .scroll-thin {
@@ -66,12 +129,107 @@ body {
 }
 
 .hatch {
-  background-image: repeating-linear-gradient(45deg, #f4f2ee 0 10px, #eceae4 10px 20px);
+  background-image: repeating-linear-gradient(45deg, rgb(var(--surface2)) 0 10px, rgb(var(--sunken)) 10px 20px);
+}
+
+/* A faint drafting grid for "blueprint" surfaces. */
+.grid-bg {
+  background-image: linear-gradient(rgb(var(--ink) / 0.035) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--ink) / 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
 }
 
 .code-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #4a4742 transparent;
+  scrollbar-color: rgb(var(--code-line)) transparent;
+}
+
+/* ---------- Small interactions ---------- */
+
+/* Every pressable thing sinks a little while held, so you know it heard you. */
+.press {
+  transition: transform 110ms var(--ease-out), background-color 150ms var(--ease-out), border-color 150ms var(--ease-out), color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out), opacity 150ms var(--ease-out);
+}
+.press:active:not(:disabled):not([aria-disabled='true']) {
+  transform: scale(0.97);
+}
+
+/* An icon that swaps for another one (copy → check, spinner → check) with a soft blur. */
+.swap {
+  position: relative;
+  display: inline-grid;
+}
+.swap > * {
+  grid-area: 1 / 1;
+  transition: opacity 160ms var(--ease-out), transform 220ms var(--ease-out), filter 220ms var(--ease-out);
+}
+.swap > [data-off] {
+  opacity: 0;
+  transform: scale(0.6);
+  filter: blur(3px);
+}
+
+/* A tick that draws itself. */
+.tick path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 280ms var(--ease-out);
+}
+.tick[data-on='true'] path {
+  stroke-dashoffset: 0;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+.shake {
+  animation: shake 320ms var(--ease-out);
+}
+
+@keyframes countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes landed {
+  0% {
+    box-shadow: 0 0 0 0 rgb(var(--ok) / 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgb(var(--ok) / 0);
+  }
+}
+
+@keyframes flash-ok {
+  0% {
+    background-color: rgb(var(--ok) / 0.16);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.flash-ok {
+  animation: flash-ok 900ms var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -79,6 +237,13 @@ body {
   *::before,
   *::after {
     animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+  }
+}
+
+@media print {
+  :root {
+    color-scheme: light;
   }
 }

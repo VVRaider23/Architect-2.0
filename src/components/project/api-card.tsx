@@ -225,7 +225,7 @@ export function ApiCard({ p }: { p: Project }) {
                   <button
                     key={l}
                     onClick={() => setLang(l)}
-                    className={cn('rounded-md px-2 py-0.5 text-[12px]', lang === l ? 'bg-[#2E2C29] text-code-ink' : 'text-code-dim hover:text-code-ink')}
+                    className={cn('rounded-md px-2 py-0.5 text-[12px]', lang === l ? 'bg-sunken text-code-ink' : 'text-code-dim hover:text-code-ink')}
                   >
                     {LANG_LABEL[l]}
                   </button>

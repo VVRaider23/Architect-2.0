@@ -9,10 +9,10 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'dark' | 'danger' | 'subtle';
 type Size = 'sm' | 'md' | 'lg';
 
 const VARIANT: Record<Variant, string> = {
-  primary: 'bg-accent text-white hover:bg-accent-ink border border-accent hover:border-accent-ink',
+  primary: 'bg-accent text-on-accent border border-accent hover:brightness-110 shadow-glow',
   secondary: 'bg-surface text-ink border border-line2 hover:bg-surface2 hover:border-ink3',
   ghost: 'bg-transparent text-ink border border-transparent hover:bg-sunken',
-  dark: 'bg-ink text-white border border-ink hover:bg-[#33312d]',
+  dark: 'bg-ink text-bg border border-ink hover:bg-ink/90',
   danger: 'bg-surface text-bad border border-bad-line hover:bg-bad-soft',
   subtle: 'bg-sunken text-ink border border-line hover:bg-line',
 };
@@ -92,7 +92,7 @@ const TONE: Record<Tone, string> = {
   warn: 'bg-warn-soft text-warn border-warn-line',
   outline: 'bg-surface text-ink border-line2',
   dashed: 'bg-transparent text-ink2 border-line2 border-dashed',
-  dark: 'bg-ink text-white border-ink',
+  dark: 'bg-ink text-bg border-ink',
 };
 
 export function Chip({
@@ -137,7 +137,7 @@ export function SectionLabel({ children, className }: { children: ReactNode; cla
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded border border-line2 bg-surface px-1.5 py-[1px] font-mono text-[11px] text-ink2 shadow-[0_1px_0_#cbc7bd]">{children}</kbd>
+    <kbd className="rounded border border-b-2 border-line2 bg-surface px-1.5 py-[1px] font-mono text-[11px] text-ink2">{children}</kbd>
   );
 }
 

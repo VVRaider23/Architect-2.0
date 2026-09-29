@@ -84,7 +84,7 @@ function Review() {
   const run = latestRun(p);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="paper flex min-h-screen flex-col bg-bg text-ink">
       <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-line bg-surface px-4">
         <Logo />
         <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-2 text-[13.5px] md:flex">
@@ -138,7 +138,7 @@ function Review() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={cn('rounded-full border px-3 py-1 text-[12px] font-medium', filter === f ? 'border-ink bg-ink text-white' : 'border-line2 bg-surface text-ink2')}
+                className={cn('rounded-full border px-3 py-1 text-[12px] font-medium', filter === f ? 'border-ink bg-ink text-bg' : 'border-line2 bg-surface text-ink2')}
               >
                 {label}
               </button>
@@ -386,7 +386,7 @@ function ReviewCard({ p, row, index, total, onSkip }: { p: Project; row: Row; in
           aria-pressed={mode === 'wrong'}
           className={cn(
             'flex h-12 items-center justify-center gap-2 rounded-xl border text-[14.5px] font-semibold',
-            mode === 'wrong' ? 'border-bad bg-bad text-white' : 'border-bad-line bg-bad-soft text-bad hover:border-bad',
+            mode === 'wrong' ? 'border-bad bg-bad text-on-bad' : 'border-bad-line bg-bad-soft text-bad hover:border-bad',
           )}
         >
           <X className="h-4 w-4" /> Wrong <Kbd>W</Kbd>

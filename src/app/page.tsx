@@ -85,15 +85,15 @@ function SignIn() {
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#1D1C1A] px-12 py-10 text-white lg:flex">
+      <section className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-surface px-12 py-10 text-ink lg:flex">
         <div className="flex items-center gap-2 text-[15.5px] font-semibold">
           <LogoMark />
           Architect
-          <span className="rounded-md border border-[#3A3834] px-1.5 py-[1px] font-mono text-[10.5px] text-[#C9C5BC]">2.0</span>
+          <span className="rounded-md border border-line2 px-1.5 py-[1px] font-mono text-[10.5px] text-ink2">2.0</span>
         </div>
         <div className="max-w-[560px]">
           <h1 className="text-[40px] font-semibold leading-[1.08] tracking-tight">Build agent apps your experts trust and your IT team approves.</h1>
-          <p className="mt-4 text-[16px] leading-relaxed text-[#C9C5BC]">
+          <p className="mt-4 text-[16px] leading-relaxed text-ink2">
             Describe the app in a sentence. Architect builds it, your expert proves the answers are right, and IT signs off before anyone relies on it.
           </p>
           <ul className="mt-7 grid gap-3 sm:grid-cols-3" aria-label="The three people in every project">
@@ -106,11 +106,11 @@ function SignIn() {
             ).map(([role, does, tone]) => {
               const person = PEOPLE.find((x) => x.role === role)!;
               return (
-                <li key={role} className="flex items-center gap-2.5 rounded-xl border border-[#3A3834] bg-[#252421] px-3 py-2.5">
+                <li key={role} className="flex items-center gap-2.5 rounded-xl border border-line bg-surface2 px-3 py-2.5">
                   <Avatar initials={person.initials} size={30} tone={tone} />
                   <span className="text-[13px] leading-tight">
-                    <span className="block font-semibold text-white">{person.short}</span>
-                    <span className="block text-[#9C988F]">{does}</span>
+                    <span className="block font-semibold text-ink">{person.short}</span>
+                    <span className="block text-ink3">{does}</span>
                   </span>
                 </li>
               );
@@ -118,7 +118,7 @@ function SignIn() {
           </ul>
           <LoopArt className="mt-6 w-full max-w-[460px]" />
         </div>
-        <p className="text-[12.5px] text-[#9C988F]">A working prototype of Architect 2.0, the next version of architect.new.</p>
+        <p className="text-[12.5px] text-ink3">A working prototype of Architect 2.0, the next version of architect.new.</p>
       </section>
 
       <section className="flex flex-col items-center justify-center px-5 py-10">

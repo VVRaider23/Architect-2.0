@@ -251,7 +251,7 @@ export function ReplayDrawer({ p }: { p: Project }) {
   const res = run?.results.find((r) => r.itemId === item.id) ?? evaluate(item, p.version);
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-[rgba(29,28,26,0.25)] animate-fade-in" onMouseDown={close}>
+    <div className="fixed inset-0 z-40 flex justify-end bg-black/50 animate-fade-in" onMouseDown={close}>
       <aside
         className="scroll-thin flex h-full w-full max-w-[520px] flex-col overflow-y-auto border-l border-line bg-surface shadow-pop animate-slide-left"
         onMouseDown={(e) => e.stopPropagation()}

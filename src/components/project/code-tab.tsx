@@ -181,7 +181,7 @@ export function CodeTab({ p }: { p: Project }) {
         </nav>
 
         <div className="flex min-h-0 min-w-0 flex-col">
-          <div className="flex flex-wrap items-center gap-2 border-b border-code-line bg-[#252421] px-4 py-2 text-[12px] text-code-dim">
+          <div className="flex flex-wrap items-center gap-2 border-b border-code-line bg-surface2 px-4 py-2 text-[12px] text-code-dim">
             <span className="font-mono text-code-ink">{file}</span>
             {showDiff ? (
               <span>
@@ -197,12 +197,12 @@ export function CodeTab({ p }: { p: Project }) {
                   <span className="text-[#7FD49A]">fixed {change.fixed}</span> · <span className={change.broke ? 'text-[#F2A197]' : ''}>broke {change.broke}</span> · {change.before} → {change.after}
                 </span>
                 {showDiff && (
-                  <button onClick={() => openCode(file, null)} className="rounded-md border border-code-line px-2 py-0.5 text-code-ink hover:bg-[#2E2C29]">
+                  <button onClick={() => openCode(file, null)} className="rounded-md border border-code-line px-2 py-0.5 text-code-ink hover:bg-sunken">
                     Show full file
                   </button>
                 )}
                 <PRButton p={p} ch={change} dark />
-                <button onClick={() => undoChange(p.id, change.id)} className="flex items-center gap-1 rounded-md border border-code-line px-2 py-0.5 text-code-ink hover:bg-[#2E2C29]">
+                <button onClick={() => undoChange(p.id, change.id)} className="flex items-center gap-1 rounded-md border border-code-line px-2 py-0.5 text-code-ink hover:bg-sunken">
                   <RotateCcw className="h-3.5 w-3.5" /> Undo
                 </button>
               </>

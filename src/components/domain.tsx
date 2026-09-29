@@ -58,7 +58,7 @@ export function TraceList({ trace, compact }: { trace: TraceStep[]; compact?: bo
             <span
               className={cn(
                 'relative z-[1] mt-0.5 flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold',
-                s.bad ? 'border-bad bg-bad text-white' : 'border-line2 bg-surface text-ink2',
+                s.bad ? 'border-bad bg-bad text-on-bad' : 'border-line2 bg-surface text-ink2',
               )}
             >
               {s.bad ? <X className="h-3 w-3" strokeWidth={3} /> : i + 1}
@@ -77,7 +77,7 @@ export function TraceList({ trace, compact }: { trace: TraceStep[]; compact?: bo
 }
 
 export function EnvPill({ env, version }: { env: Env; version?: number | null }) {
-  const tone = env === 'live' ? 'bg-ok text-white border-ok' : env === 'test' ? 'bg-warn-soft text-warn border-warn-line' : 'bg-accent-soft text-accent-ink border-accent-line';
+  const tone = env === 'live' ? 'bg-ok text-on-ok border-ok' : env === 'test' ? 'bg-warn-soft text-warn border-warn-line' : 'bg-accent-soft text-accent-ink border-accent-line';
   return (
     <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[2px] text-[11.5px] font-semibold uppercase tracking-wide', tone)}>
       {env === 'live' && <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse2" />}

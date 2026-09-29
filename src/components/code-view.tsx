@@ -23,10 +23,10 @@ const RE: Record<string, RegExp> = {
 };
 
 const CLS = {
-  comment: 'text-[#8A857C] italic',
+  comment: 'text-[#7A7D93] italic',
   string: 'text-[#A8D5A2]',
   number: 'text-[#E6B673]',
-  keyword: 'text-[#8FA6F0]',
+  keyword: 'text-[#A9AFFF]',
   fn: 'text-[#E9C98B]',
   key: 'text-[#E6B673]',
 };
@@ -68,7 +68,7 @@ export function CodeBlock({ text, lang, className }: { text: string; lang: strin
         <tbody>
           {lines.map((l, i) => (
             <tr key={i}>
-              <td className="w-[1%] select-none whitespace-nowrap px-3 text-right align-top text-[#5E5A53]">{i + 1}</td>
+              <td className="w-[1%] select-none whitespace-nowrap px-3 text-right align-top text-code-dim">{i + 1}</td>
               <td className="whitespace-pre pr-6">{highlight(l, lang)}</td>
             </tr>
           ))}
@@ -87,15 +87,15 @@ export function DiffBlock({ before, after, lang, className }: { before: string; 
           {d.map((l, i) =>
             l.type === 'gap' ? (
               <tr key={i}>
-                <td colSpan={4} className="bg-[#23221F] px-3 py-0.5 text-[11px] text-[#7E7A72]">
+                <td colSpan={4} className="bg-surface2 px-3 py-0.5 text-[11px] text-code-dim">
                   ⋯
                 </td>
               </tr>
             ) : (
               <Fragment key={i}>
                 <tr className={cn(l.type === 'add' && 'bg-code-add', l.type === 'del' && 'bg-code-del')}>
-                  <td className="w-[1%] select-none whitespace-nowrap px-2 text-right align-top text-[#5E5A53]">{l.a ?? ''}</td>
-                  <td className="w-[1%] select-none whitespace-nowrap px-2 text-right align-top text-[#5E5A53]">{l.b ?? ''}</td>
+                  <td className="w-[1%] select-none whitespace-nowrap px-2 text-right align-top text-code-dim">{l.a ?? ''}</td>
+                  <td className="w-[1%] select-none whitespace-nowrap px-2 text-right align-top text-code-dim">{l.b ?? ''}</td>
                   <td className={cn('w-[1%] select-none px-1 align-top', l.type === 'add' ? 'text-[#7FD49A]' : l.type === 'del' ? 'text-[#F2A197]' : 'text-transparent')}>
                     {l.type === 'add' ? '+' : l.type === 'del' ? '−' : ' '}
                   </td>

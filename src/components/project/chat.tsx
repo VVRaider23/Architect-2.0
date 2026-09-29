@@ -128,7 +128,7 @@ export function ChatPanel({ p }: { p: Project }) {
           <button
             type="submit"
             disabled={!text.trim() || !!pending}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white disabled:bg-line2"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-on-accent disabled:bg-line2"
             aria-label="Send"
           >
             <ArrowUp className="h-4 w-4" />

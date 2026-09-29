@@ -15,9 +15,9 @@ import { Avatar } from './ui';
 export function LogoMark({ size = 26 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="shrink-0">
-      <rect x="1" y="1" width="30" height="30" rx="8" fill="#1D1C1A" />
-      <path d="M8 23 L16 8 L24 23" fill="none" stroke="#FFFFFF" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M11.5 17.5 H20.5" stroke="#8FA6F0" strokeWidth="2.6" strokeLinecap="round" />
+      <rect x="1" y="1" width="30" height="30" rx="8" fill="#15171F" stroke="#2C3041" />
+      <path d="M8.5 23 L16 8.5 L23.5 23" fill="none" stroke="#ECEDF3" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M11.8 17.4 H20.2" stroke="#8B93FF" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -304,7 +304,7 @@ function ToastItem({ id, text, tone, onDone }: { id: string; text: string; tone:
     <div
       className={cn(
         'pointer-events-auto flex items-center gap-2 rounded-xl border px-4 py-2.5 text-[13.5px] shadow-pop animate-slide-up',
-        tone === 'ok' ? 'border-ok-line bg-surface text-ink' : tone === 'bad' ? 'border-bad-line bg-bad-soft text-bad' : 'border-line bg-ink text-white',
+        tone === 'ok' ? 'border-ok-line bg-surface text-ink' : tone === 'bad' ? 'border-bad-line bg-bad-soft text-bad' : 'border-line bg-ink text-bg',
       )}
     >
       {tone === 'ok' && <Check className="h-4 w-4 shrink-0 text-ok" />}

@@ -49,7 +49,7 @@ function LaunchPack() {
   const pilotFlags = p.flags.filter((f) => f.env === 'test' && f.at <= now);
 
   return (
-    <div className="min-h-screen">
+    <div className="paper min-h-screen bg-bg text-ink">
       <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-surface px-4 print:hidden">
         <Logo />
         <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-2 text-[13.5px] md:flex">

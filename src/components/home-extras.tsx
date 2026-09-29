@@ -100,7 +100,7 @@ export function StudioAgentsModal({
                 aria-pressed={on}
                 className={cn('flex w-full items-start gap-3 rounded-xl border px-3.5 py-3 text-left', on ? 'border-accent bg-accent-soft' : 'border-line hover:border-line2')}
               >
-                <span className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border', on ? 'border-accent bg-accent text-white' : 'border-line2 bg-surface')}>
+                <span className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border', on ? 'border-accent bg-accent text-on-accent' : 'border-line2 bg-surface')}>
                   {on && <Check className="h-3.5 w-3.5" />}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -127,7 +127,7 @@ export function PromptLibraryModal({ open, onClose, onPick }: { open: boolean; o
           <button
             key={g.group}
             onClick={() => setGroup(g.group)}
-            className={cn('rounded-full border px-3 py-1 text-[12.5px] font-medium', group === g.group ? 'border-ink bg-ink text-white' : 'border-line2 text-ink2 hover:border-ink3')}
+            className={cn('rounded-full border px-3 py-1 text-[12.5px] font-medium', group === g.group ? 'border-ink bg-ink text-bg' : 'border-line2 text-ink2 hover:border-ink3')}
           >
             {g.group}
           </button>

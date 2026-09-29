@@ -180,7 +180,7 @@ export function ProofTab({ p, state }: { p: Project; state?: PathStep['state'] }
               onClick={() => setFilter(id)}
               className={cn(
                 'rounded-full border px-3 py-1 text-[12px] font-medium',
-                filter === id ? 'border-ink bg-ink text-white' : 'border-line2 bg-surface text-ink2 hover:border-ink3',
+                filter === id ? 'border-ink bg-ink text-bg' : 'border-line2 bg-surface text-ink2 hover:border-ink3',
               )}
             >
               {label}

@@ -117,7 +117,7 @@ export function PRButton({ p, ch, dark }: { p: Project; ch: ChangeReceipt; dark?
   if (ch.committed) {
     const label = `PR #${ch.pr} open`;
     const cls = dark
-      ? 'flex items-center gap-1 rounded-md bg-[#1E3A27] px-2 py-0.5 text-[#7FD49A]'
+      ? 'flex items-center gap-1 rounded-md bg-ok-soft px-2 py-0.5 text-ok'
       : 'inline-flex h-8 items-center gap-1.5 rounded-lg border border-ok-line bg-ok-soft px-3 text-[12.5px] font-medium text-ok';
     return ch.prUrl ? (
       <a href={ch.prUrl} target="_blank" rel="noreferrer" className={cls + ' hover:underline'}>
@@ -135,7 +135,7 @@ export function PRButton({ p, ch, dark }: { p: Project; ch: ChangeReceipt; dark?
     <button
       onClick={() => gh.openPR(ch.id)}
       disabled={busy}
-      className="flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 font-medium text-white hover:bg-accent-ink disabled:opacity-60"
+      className="flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 font-medium text-on-accent hover:brightness-110 disabled:opacity-60"
     >
       {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <GitPullRequest className="h-3.5 w-3.5" />} {text}
     </button>

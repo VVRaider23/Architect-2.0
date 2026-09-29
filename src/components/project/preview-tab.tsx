@@ -103,7 +103,7 @@ export function PreviewTab({ p }: { p: Project }) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto bg-sunken p-5">
-        <div className={cn('mx-auto overflow-hidden rounded-xl border border-line2 bg-surface shadow-pop', device === 'mobile' ? 'max-w-[400px]' : 'max-w-[1180px]')}>
+        <div className={cn('paper mx-auto overflow-hidden rounded-xl border border-line2 bg-surface text-ink shadow-pop', device === 'mobile' ? 'max-w-[400px]' : 'max-w-[1180px]')}>
           <div className="flex h-9 items-center gap-2 border-b border-line bg-surface2 px-3">
             <span className="flex gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-line2" />
@@ -199,7 +199,7 @@ export function BuildView({ p }: { p: Project }) {
                 <span
                   className={cn(
                     'mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border',
-                    i < step ? 'border-ok bg-ok text-white' : i === step ? 'border-accent text-accent' : 'border-line2 text-transparent',
+                    i < step ? 'border-ok bg-ok text-on-ok' : i === step ? 'border-accent text-accent' : 'border-line2 text-transparent',
                   )}
                 >
                   {i < step ? <Check className="h-3 w-3" strokeWidth={3} /> : i === step ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
@@ -220,7 +220,7 @@ export function BuildView({ p }: { p: Project }) {
         </div>
       </div>
       <div className="flex min-w-0 flex-col gap-5">
-        <div className="overflow-hidden rounded-xl border border-line2 bg-surface shadow-card">
+        <div className="paper overflow-hidden rounded-xl border border-line2 bg-surface text-ink shadow-card">
           <div className="flex h-9 items-center justify-between border-b border-line bg-surface2 px-3 text-[12px]">
             <span className="font-semibold">Harborline Claims</span>
             <span className="text-ink2">preview · assembling as it’s built</span>

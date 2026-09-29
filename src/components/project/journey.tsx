@@ -13,7 +13,7 @@ const ROLE_TONE: Record<Role, 'accent' | 'ok' | 'warn'> = { builder: 'accent', r
 function StepDot({ state, n }: { state: PathStep['state']; n: number }) {
   if (state === 'done')
     return (
-      <span aria-hidden className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-ok text-white">
+      <span aria-hidden className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-ok text-on-ok">
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
       </span>
     );
@@ -22,7 +22,7 @@ function StepDot({ state, n }: { state: PathStep['state']; n: number }) {
       aria-hidden
       className={cn(
         'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full font-mono text-[11.5px] font-semibold',
-        state === 'current' ? 'bg-accent text-white shadow-ring' : 'border border-line2 bg-surface text-ink3',
+        state === 'current' ? 'bg-accent text-on-accent shadow-ring' : 'border border-line2 bg-surface text-ink3',
       )}
     >
       {n}

@@ -369,7 +369,7 @@ function Audit() {
           <button
             key={p}
             onClick={() => setWho(p)}
-            className={cn('rounded-full border px-3 py-1 text-[12px] font-medium', who === p ? 'border-ink bg-ink text-white' : 'border-line2 bg-surface text-ink2')}
+            className={cn('rounded-full border px-3 py-1 text-[12px] font-medium', who === p ? 'border-ink bg-ink text-bg' : 'border-line2 bg-surface text-ink2')}
           >
             {p}
           </button>
