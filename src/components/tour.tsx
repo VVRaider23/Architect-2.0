@@ -180,11 +180,11 @@ const STEPS: Step[] = [
       const run = latestRun(p);
       return (
         <>
-          Architect checked every answer against examples an expert would give.{' '}
+          Think of an exam with an answer sheet: {run?.total} example claims, each with the right answer written down. The app got{' '}
           <b className="text-ink">
             {run?.passed} of {run?.total}
           </b>{' '}
-          match. The misses are all theft claims.
+          right. The ones it missed are all theft claims, because it doesn’t know theft needs a police report yet.
         </>
       );
     },

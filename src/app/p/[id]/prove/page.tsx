@@ -26,7 +26,7 @@ function MissRow({ m, fixed, delay }: { m: Miss; fixed: boolean; delay: number }
         <div className="text-[15px] font-medium">{m.item.claim.title}</div>
         <div className="relative mt-1 text-[14px] leading-relaxed text-ink2">
           <span className={cn('block transition-all duration-300', fixed && 'pointer-events-none absolute inset-0 -translate-y-1 opacity-0 blur-[2px]')} style={{ transitionDelay: `${delay}ms` }}>
-            Said “{m.said}”. It should {m.should}.
+            The app said “{m.said}”. It should {m.should}.
           </span>
           <span className={cn('block transition-all duration-300', !fixed && 'pointer-events-none absolute inset-0 translate-y-1 opacity-0 blur-[2px]')} style={{ transitionDelay: `${delay + 80}ms` }}>
             <s className="text-ink3 decoration-bad/70">{m.said.charAt(0).toUpperCase() + m.said.slice(1)}</s> <span className="font-medium text-ink">{m.after}</span>

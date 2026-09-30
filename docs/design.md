@@ -76,7 +76,7 @@ All in `src/components/ui.tsx`. Each one has its small interaction built in, so 
 | Questions (S6) | The chosen answer gets a drawn tick, then the next question slides in from the right; progress bars fill | 320 ms, 260 ms | You feel the progress; keys 1-3 make it fast |
 | Plan (S7) | The four lines arrive one after another | 60 ms stagger | Reads as a list you can take in, not a wall |
 | Building (S8) | A technical drawing of the app draws itself, layer by layer, as each step ticks; the test run ends with 15 small marks, 12 green and 3 red | 1.1 s per layer | Waiting becomes watching; the result is visible before it's read |
-| Ready (S9) | The ring fills while the number counts up | 1 s | The score lands with weight |
+| Ready (S9) | The ring fills while the number counts up; then the 15 examples pop in one by one as green ticks and red crosses | 1 s, then 45 ms each | The score lands with weight, and "15 examples" becomes something you can see and point at |
 | App (S10) | Select: hovering outlines a part and names it; clicking puts it in the chat | 100 ms | "Point at it and say what to change" needs no explanation |
 | App (S10) | The console slides up from the bottom | 300 ms, drawer curve | Details on demand, out of the way otherwise |
 | App, Agents, Code | The tab highlight glides the moment it's clicked, before the next screen has loaded | 300 ms | The click is answered at once |
@@ -107,7 +107,7 @@ All in `src/components/ui.tsx`. Each one has its small interaction built in, so 
 | S6 | Three questions | Answer three quick questions | (keys 1-3) | Tick, then slide to the next |
 | S7 | The plan | Is this the right plan? | Build it | Framework menu; details on demand |
 | S8 | Building | What's happening, how long is left? | See the results | The drawing draws itself |
-| S9 | Ready | Did it work? | See the 3 misses | Ring counts up |
+| S9 | Ready | Did it work? | See the 3 misses | Ring counts up; 15 squares; one miss next to its right answer |
 | S10 | Your app | Does it look right? | (Select) | Point-and-ask |
 | S11 | Agents | How does it work inside? | (click an agent) | Hover fades the rest |
 | S12 | Code | Can I read the code? | Copy | Copy swaps to a tick |
@@ -163,3 +163,4 @@ All in `src/components/ui.tsx`. Each one has its small interaction built in, so 
 | 10 | One app with two ways in, and a Developer tools switch | Serves non-technical builders and developers without asking anyone what they are; the way in is the signal | A second, "classic" copy of today's Architect next to 2.0 | Current Architect users can't find what they know |
 | 11 | Tuck developer tools away, never remove them | Non-developers get a calmer screen; the code is still one click away (</> menu, ⌘K) | Hiding the Code screen from people who didn't connect GitHub | Developers say they can't find the code |
 | 12 | Placeholders shaped like the next screen, plus a thin line | The layout doesn't jump when content arrives, and a slow move still answers the click | A spinner or "Loading…" in the middle of an empty page | |
+| 13 | Explain a score with one worked example | "12 of 15 match" meant nothing to a first-time viewer until it was shown as a marked exam: one claim, what the app said, the right answer | A longer paragraph, or a help link | |

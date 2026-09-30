@@ -1,5 +1,5 @@
-import type { Action, AnswerKeyItem, Project, ProofResult } from './types';
-import { ACTION_SHORT, latestRun } from './engine';
+import type { Action, AnswerKeyItem, Claim, ItemSource, Project, ProofResult } from './types';
+import { ACTION_SHORT, KIND_LABEL, latestRun, money } from './engine';
 
 /** How each next step reads in a sentence: "It should ask for the police report." */
 export const SHOULD: Record<Action, string> = {
@@ -52,3 +52,35 @@ export function missReason(ms: Miss[]): string {
 }
 
 export const words = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** Each next step as a short name and what it means in everyday words: "Fast-track · pay it quickly". */
+export const PLAIN: Record<Action, { title: string; gloss: string }> = {
+  fast_track: { title: 'Fast-track', gloss: 'pay it quickly' },
+  senior_handler: { title: 'Senior handler', gloss: 'an experienced person decides' },
+  ask_police_report: { title: 'Hold it', gloss: 'ask for the police report first' },
+  request_photos: { title: 'Ask for photos', gloss: 'see the damage before deciding' },
+  normal_review: { title: 'Normal review', gloss: 'a person checks it' },
+};
+
+/** The facts that matter about a claim, in one short line: "$950, no police report". */
+export function claimFacts(c: Claim) {
+  if (c.kind === 'theft') return `${money(c.amount)}, ${c.policeReport ? 'police report attached' : 'no police report'}`;
+  return `${money(c.amount)}, ${KIND_LABEL[c.kind].toLowerCase()}`;
+}
+
+const FROM: Record<ItemSource, (n: number) => string> = {
+  plan: (n) => `${n} from the plan you approved`,
+  generated: (n) => `${n} that Architect wrote to cover more cases`,
+  expert: (n) => `${n} added by your expert`,
+  live_flag: (n) => `${n} from answers people flagged in real use`,
+  import: (n) => `${n} from your repo`,
+};
+
+/** Where the Answer Key's examples came from, in one sentence: "3 from the plan you approved, and 12 that…". */
+export function examplesFrom(p: Project) {
+  const counts = new Map<ItemSource, number>();
+  for (const i of p.answerKey) counts.set(i.source, (counts.get(i.source) ?? 0) + 1);
+  const parts = (['plan', 'generated', 'import', 'expert', 'live_flag'] as ItemSource[]).filter((k) => counts.get(k)).map((k) => FROM[k](counts.get(k)!));
+  if (!parts.length) return '';
+  return parts.length === 1 ? `All ${parts[0].replace(/^\d+ /, '')}.` : `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}.`;
+}

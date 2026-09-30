@@ -45,7 +45,7 @@ flowchart TD
 5. **S6 Three questions.** One at a time; press 1, 2 or 3. Back goes to the previous question.
 6. **S7 The plan.** Four plain lines, the framework (a menu), the cost ("About 140 credits"), and details hidden behind "See every agent and screen". Nothing is built until **Build it**.
 7. **S8 Building.** A drawing of the app fills in, layer by layer, while six steps tick off with the time left. "Show the log" swaps the drawing for the raw log.
-8. **S9 Ready.** A ring counts up to the score. "12 of 15 answers match your examples. The 3 that miss are all theft claims."
+8. **S9 Ready.** It reads like a marked exam. A ring counts up to the score, then one line says what was tested: "Architect tested it on 15 example claims, each with the right answer already written down. 12 match. The 3 that miss are all theft claims." Below it, all 15 examples appear as small squares (green tick, red cross; point at one to see the claim), the main button, and one miss shown side by side: what the app said ("Fast-track: pay it quickly") next to the right answer ("Hold it: ask for the police report first").
 
 **Exit states:** success is S9, then S13 or S10. Leaving mid-way is safe: everything is saved, and opening the project again lands on the right step (a plan waiting for approval opens S7, a build in progress opens S8).
 
@@ -295,11 +295,13 @@ Every screen the journeys use. **Loading** means: the moment you click, a thin l
 
 ### S9 — Ready · `/p/[id]/ready`
 **Purpose:** did it work? **Appears in:** J1.
+**Contents:** the score ring; one sentence on what was tested; the 15 examples as squares with a legend ("12 right · 3 wrong, all theft claims"); the main button; "One of the misses" (the claim, what the app said, the right answer, and the rule behind it); "Where do these 15 examples come from?" (3 from the plan, 12 written by Architect; the expert adds more; all rerun after every change).
 
 | State | Behaviour |
 |---|---|
-| Some wrong | Ring in iris with a red remainder; "See the 3 misses" is the main button |
-| All right | Ring in green; "Open the app" is the main button |
+| Some wrong | Ring in iris with a red remainder; "See the 3 misses" is the main button, in view even on a small laptop |
+| All right | Ring in green; all squares green; no example card; "Open the app" is the main button |
+| Pointing at a square | Tooltip: "C-1043 · Stolen bike · wrong" |
 
 ### S10 — Your app · `/p/[id]/app`
 **Purpose:** does it look right? Change anything by pointing at it. **Appears in:** J1.
@@ -464,3 +466,4 @@ Every screen the journeys use. **Loading** means: the moment you click, a thin l
 | 15 | Should today's Architect sit next to 2.0 as a second, "classic" app? | No. One app with two ways in (Describe it · Bring your code) and a Developer tools switch. A second app splits the pitch, doubles the work and starts with "are you technical?" | 2026-09-29 | Current Architect users can't find what they know; then add a "Coming from today's Architect?" guide |
 | 16 | Who sees the code up front? | Developer tools: on after a GitHub sign-in or bringing code, off after "Describe it" with email. One switch in Settings, the account menu and ⌘K. Off means tucked in the </> menu, never removed | 2026-09-29 | Non-developers go looking for the code, or developers miss it |
 | 17 | Which sign-in comes first? | The one that fits the way in: email for "Describe it", GitHub for "Bring your code". Email sign-ins skip the GitHub question | 2026-09-29 | Most people in a pilot sign in with GitHub anyway |
+| 18 | How does the results screen explain "12 of 15 match"? | Like a marked exam: what was tested in one line, all 15 examples as squares, and one miss shown next to its right answer. Found when a first-time viewer couldn't follow the step without a walkthrough | 2026-09-30 | People still ask what "match" means |
